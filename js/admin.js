@@ -3,7 +3,7 @@ window.Admin = (function () {
   'use strict';
   const { S, DB, $, $$, money, esc, toast, openModal, closeModal, reload, resizeImage, showTicket } = window.DZ;
   const clone = o => JSON.parse(JSON.stringify(o));
-  const TABS = [['resumen', 'Resumen'], ['cotizaciones', 'Cotizaciones'], ['tarjetas', 'Tarjetas y lealtad'], ['lisas', 'Inventario lisas'], ['stock', 'Stock'], ['catalogo', 'Catálogo personalizable'], ['extras', 'Extras y estampados'], ['ajustes', 'Ajustes']];
+  const TABS = [['resumen', 'Resumen'], ['cotizaciones', 'Cotizaciones'], ['tarjetas', 'Tarjetas y lealtad'], ['lisas', 'Inventario lisas'], ['contenido', 'Galería, opiniones y FAQ'], ['stock', 'Stock'], ['catalogo', 'Catálogo personalizable'], ['extras', 'Extras y estampados'], ['ajustes', 'Ajustes']];
   const STATUS = { nueva: 'Nueva', cotizada: 'Cotizada', proceso: 'En proceso', cerrada: 'Cerrada (entregada)', cancelada: 'Cancelada' };
   const KINDS = [['tee', 'Playera'], ['polo', 'Polo'], ['hoodie', 'Hoodie'], ['cap', 'Gorra'], ['mug', 'Taza'], ['bag', 'Bolsa'], ['sticker', 'Sticker']];
   let tab = 'resumen', quotes = [];
@@ -93,8 +93,34 @@ window.Admin = (function () {
     }
   };
 
-  function tableHTML(col) {
+  Object.assign(DEFS, {
+    gallery: {
+      title: 'Trabajos reales', add: 'Nueva foto de trabajo', blank: () => ({ caption: '', category: '', images: [], active: true, order: 99, createdAt: Date.now() }),
+      fields: () => [{ key: 'caption', label: 'Descripción corta', ph: 'Playeras para equipo de fútbol' }, { key: 'category', label: 'Categoría', list: cats() }, { key: 'order', label: 'Orden', type: 'number' }, { key: 'active', label: 'Visible en la página', type: 'check' },
+        { key: 'images', label: 'Fotos (hasta 4)', type: 'images', max: 4, hint: 'Solo fotos de pedidos reales. Evita que salgan caras o datos del cliente sin su permiso.' }],
+      cols: [['', r => r.images && r.images[0] ? `<img src="${r.images[0]}" alt="">` : ''], ['Trabajo', r => `<b>${esc(r.caption || '(sin descripción)')}</b><br><span class="tag">${esc(r.category || '')}</span>`], ['Fotos', r => (r.images || []).length], ['Visible', r => r.active !== false ? 'Sí' : 'No']]
+    },
+    testimonials: {
+      title: 'Opiniones', add: 'Nueva opinión', blank: () => ({ name: '', product: '', source: 'WhatsApp', chat: 'C: \nD: ', active: true, order: 99 }),
+      fields: () => [{ key: 'name', label: 'Iniciales del cliente', ph: 'K. L.', hint: 'Por privacidad usa solo iniciales.' }, { key: 'product', label: 'Producto o servicio', ph: 'Playeras para evento' }, { key: 'source', label: 'Canal', type: 'select', opts: [['WhatsApp', 'WhatsApp'], ['Instagram', 'Instagram'], ['Facebook', 'Facebook']] }, { key: 'order', label: 'Orden', type: 'number' },
+        { key: 'chat', label: 'Conversación', type: 'area', hint: 'Una línea por mensaje. Empieza con "C:" si lo dijo el cliente o "D:" si lo dijo Draguz. Sin teléfonos, direcciones ni datos de pago.' }, { key: 'active', label: 'Visible en la página', type: 'check' }],
+      cols: [['Cliente', r => `<b>${esc(r.name || 'Cliente')}</b><br><span class="tag">${esc(r.product || '')}</span>`], ['Canal', r => esc(r.source || '')], ['Mensajes', r => String(r.chat || '').split('\n').filter(x => x.trim()).length], ['Visible', r => r.active !== false ? 'Sí' : 'No']]
+    },
+    faqs: {
+      title: 'Preguntas frecuentes', add: 'Nueva pregunta', blank: () => ({ q: '', a: '', active: true, order: 99 }),
+      fields: () => [{ key: 'q', label: 'Pregunta', req: 1, full: 1 }, { key: 'a', label: 'Respuesta', type: 'area', hint: 'Puedes escribir {anticipo} y se reemplaza por el % de anticipo de Ajustes.' }, { key: 'order', label: 'Orden', type: 'number' }, { key: 'active', label: 'Visible en la página', type: 'check' }],
+      cols: [['Pregunta', r => `<b>${esc(r.q)}</b>`], ['Orden', r => r.order || ''], ['Visible', r => r.active !== false ? 'Sí' : 'No']]
+    }
+  });
+  function contentHTML() {
+    const seeded = S.testimonialsSeeded || S.faqsSeeded;
+    const note = seeded ? `<div class="note">Estás viendo las <b>${[S.testimonialsSeeded && 'opiniones', S.faqsSeeded && 'preguntas'].filter(Boolean).join(' y ')} de ejemplo</b> (se muestran en la página mientras no guardes las tuyas). <button class="btn sm" id="ct-seed" style="margin-left:8px">Guardarlas para poder editarlas</button></div>` : '';
+    const ro = col => (col === 'testimonials' && S.testimonialsSeeded) || (col === 'faqs' && S.faqsSeeded);
+    return note + ['gallery', 'testimonials', 'faqs'].map(c => `<div class="ct-block">${tableHTML(c, ro(c))}</div>`).join('');
+  }
+  function tableHTML(col, readOnly) {
     const d = DEFS[col], rows = S[col === 'catalog' ? 'catalog' : col];
+    if (readOnly) return `<div class="adm-h"><h2>${d.title}</h2></div><div class="tblwrap"><table class="tbl"><thead><tr>${d.cols.map(c => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${d.cols.map(c => `<td>${c[1](r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     return `<div class="adm-h"><h2>${d.title}</h2><button class="btn sm" data-add="${col}">+ ${d.add}</button></div>
       <div class="tblwrap"><table class="tbl"><thead><tr>${d.cols.map(c => `<th>${c[0]}</th>`).join('')}<th></th></tr></thead><tbody>
       ${rows.length ? rows.map(r => `<tr>${d.cols.map(c => `<td>${c[1](r)}</td>`).join('')}<td><div class="acts"><button class="btn ghost sm" data-edit="${col}:${r.id}">Editar</button><button class="btn danger sm" data-del="${col}:${r.id}">Borrar</button></div></td></tr>`).join('') : `<tr><td colspan="${d.cols.length + 1}" style="text-align:center;color:var(--mute);padding:36px">Nada por aquí todavía.</td></tr>`}
@@ -107,7 +133,7 @@ window.Admin = (function () {
     return `<div class="adm-h"><h2>Cotizaciones</h2></div><div class="tblwrap"><table class="tbl"><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Piezas</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody>
       ${quotes.length ? quotes.map(q => `<tr><td><b>${esc(q.folio)}</b></td><td>${new Date(q.createdAt || q.date).toLocaleDateString('es-MX')}</td><td>${esc(q.name || q.customer.name || '—')}<br><span class="tag">${[q.email ? esc(q.email) : '', q.customer && q.customer.phone ? `<a href="${waLink(q.customer.phone)}" target="_blank" rel="noopener" style="color:#25D366">${esc(q.customer.phone)}</a>` : '', q.guest ? 'sin cuenta' : ''].filter(Boolean).join(' · ')}</span></td><td>${q.lines.reduce((a, l) => a + l.qty, 0)}${stockBadge(q)}</td><td><b>${money(q.total)}</b>${cardBadge(q)}</td>
       <td><select data-st="${q.id}">${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${q.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
-      <td><div class="acts"><button class="btn ghost sm" data-ticket="${q.id}">Ticket</button><button class="btn danger sm" data-delq="${q.id}">Borrar</button></div></td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--mute);padding:36px">Aún no llegan solicitudes.</td></tr>'}
+      <td><div class="acts">${hasDesign(q) ? `<button class="btn sm" data-design="${q.id}">🎨 Diseño</button>` : ''}<button class="btn ghost sm" data-ticket="${q.id}">Ticket</button><button class="btn danger sm" data-delq="${q.id}">Borrar</button></div></td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--mute);padding:36px">Aún no llegan solicitudes.</td></tr>'}
       </tbody></table></div>`;
   }
 
@@ -431,6 +457,15 @@ window.Admin = (function () {
     } catch (er) { toast(DB.friendlyError(er), true); sel.value = from; }
   }
 
+  const hasDesign = q => (q.lines || []).some(l => l.mockup) || Object.keys(q.designs || {}).length > 0;
+  function openDesign(q) {
+    const lines = (q.lines || []).filter(l => l.mockup || l.designId);
+    const m = openModal(`<h3 class="m-title">Diseño · ${esc(q.folio)}</h3><p class="m-sub">${esc(q.name || (q.customer && q.customer.name) || '')}</p>
+      <div class="dz-designs">${lines.map((l, i) => `<figure>${l.mockup ? `<img src="${l.mockup}" alt="Vista previa">` : ''}<figcaption><b>${esc(l.name)}</b>${[l.cut, l.color].filter(Boolean).map(esc).join(' · ')}${l.notes ? '<br><span class="tag">' + esc(l.notes) + '</span>' : ''}</figcaption>
+        <div class="acts">${l.mockup ? `<a class="btn ghost sm" download="${esc(q.folio)}-vista-${i + 1}.jpg" href="${l.mockup}">Descargar vista</a>` : ''}${l.designId && (q.designs || {})[l.designId] ? `<a class="btn sm" download="${esc(q.folio)}-diseno-${i + 1}.png" href="${q.designs[l.designId]}">Descargar diseño original</a>` : ''}</div></figure>`).join('')}</div>
+      <p class="tag" style="margin-top:12px;text-transform:none;letter-spacing:.02em">El diseño original viene en PNG (reducido para caber en la cotización). Para imprimir en grande pide al cliente el archivo en alta resolución.</p>`, { wide: true });
+    return m;
+  }
   function stockBadge(q) {
     if (q.stockUsed && q.stockUsed.length) return '<br><span class="tag">Lisas descontadas</span>';
     if (!['nueva', 'cotizada'].includes(q.status)) return '';
@@ -453,6 +488,7 @@ window.Admin = (function () {
     else if (tab === 'stock') body.innerHTML = tableHTML('stock');
     else if (tab === 'catalogo') body.innerHTML = tableHTML('catalog');
     else if (tab === 'extras') body.innerHTML = tableHTML('extras');
+    else if (tab === 'contenido') body.innerHTML = contentHTML();
     else if (tab === 'cotizaciones') body.innerHTML = await quotesHTML();
     else if (tab === 'tarjetas') { try { await loadLoyalty(); body.innerHTML = cardsHTML(); } catch (e) { body.innerHTML = '<div class="note">' + esc(DB.friendlyError(e)) + '</div>'; } }
     else if (tab === 'lisas') { try { await loadBlanks(); body.innerHTML = blanksHTML(); } catch (e) { body.innerHTML = '<div class="note">' + esc(DB.friendlyError(e)) + '</div>'; } }
@@ -469,6 +505,7 @@ window.Admin = (function () {
       if (t.dataset.edit) { const [c, id] = t.dataset.edit.split(':'), d = DEFS[c], it = S[c].find(x => x.id === id); return form({ title: 'Editar: ' + it.name, fields: d.fields(), values: it, onSave: o => DB.save(c, o) }); }
       if (t.dataset.del) { const [c, id] = t.dataset.del.split(':'); if (!confirm('¿Borrar este elemento?')) return; try { await DB.remove(c, id); toast('Borrado'); await refresh(); } catch (er) { toast(DB.friendlyError(er), true); } return; }
       if (t.dataset.ticket) return showTicket(quotes.find(q => q.id === t.dataset.ticket));
+      if (t.dataset.design) return openDesign(quotes.find(q => q.id === t.dataset.design));
       if (t.id === 'lc-buy') return openBuy({});
       if (t.dataset.buy) return openBuy({ code: t.dataset.buy });
       if (t.dataset.hist) return openHistory(t.dataset.hist);
@@ -477,6 +514,7 @@ window.Admin = (function () {
       if (t.id === 'lc-sheet') return printSheet();
       if (t.id === 'lc-draw') return drawRaffle();
       if (t.id === 'bl-add') return openBlankForm();
+      if (t.id === 'ct-seed') { const cols = [S.testimonialsSeeded && 'testimonials', S.faqsSeeded && 'faqs'].filter(Boolean); try { await DB.seed(cols); toast('Ejemplos guardados: ya puedes editarlos'); await refresh(); } catch (er) { toast(DB.friendlyError(er), true); } return; }
       if (t.dataset.bin) return adjustBlank(t.dataset.bin, 1);
       if (t.dataset.bout) return adjustBlank(t.dataset.bout, -1);
       if (t.dataset.bdel) { if (!confirm('¿Borrar esta combinación del inventario?')) return; try { await DB.remove('blanks', t.dataset.bdel); toast('Borrado'); await loadBlanks(); paint(); } catch (er) { toast(DB.friendlyError(er), true); } return; }

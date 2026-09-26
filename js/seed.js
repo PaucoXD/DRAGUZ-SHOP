@@ -46,6 +46,32 @@
       { id: 'seed-ex-empaque', name: 'Empaque premium (caja negra mate)', price: 30, scope: 'pieza', hint: 'Por pieza', active: true },
       { id: 'seed-ex-diseno', name: 'Diseño / vectorizado de logo', price: 150, scope: 'unico', hint: 'Cargo único', active: true }
     ],
+    // Opiniones: conversaciones reales resumidas, solo con iniciales (sin fotos, teléfonos ni datos de pago).
+    // Formato del chat: una línea por mensaje; "C:" = cliente, "D:" = Draguz.
+    testimonials: [
+      { id: 'seed-op-1', order: 1, name: 'F.', product: 'Termo y playeras', source: 'WhatsApp', active: true,
+        chat: 'D: Hola, buenas noches. ¿Le tapamos estas letras?\nC: Sí puede, sí\nD: Ya quedaron. Que tenga muy buen viaje, gracias por su compra 🙋\nC: Un placer' },
+      { id: 'seed-op-2', order: 2, name: 'M.', product: 'Regalo personalizado', source: 'Instagram', active: true,
+        chat: 'D: Listo amiga. ¿Nos etiquetas? 🤪\nD: Cualquier cosa estamos al pendiente\nC: Muchas gracias 🥰🥰\nD: Esperamos sea de su agrado y le guste a tu novio 😁' },
+      { id: 'seed-op-3', order: 3, name: 'K.', product: 'Entrega a domicilio', source: 'WhatsApp', active: true,
+        chat: 'C: ¿Podemos pasar por ellas?\nD: Si quieres al ratito se las llevo\nC: Me avisas si lo dejas en la casa y yo te transfiero\nD: ¡Gracias! Espero les gusten 👍' },
+      { id: 'seed-op-4', order: 4, name: '', product: 'Playeras lisas', source: 'WhatsApp', active: true,
+        chat: 'C: Esas solas, sin diseño, ¿en cuánto las tienes?\nD: $145 las tenemos\nD: Ya quedaron las playeras\nC: Ahí voy por ellas' },
+      { id: 'seed-op-5', order: 5, name: 'K. L.', product: 'Entrega en punto de encuentro', source: 'WhatsApp', active: true,
+        chat: 'C: Te miro en el Oxxo a la 1:45\nD: Va que va, ya voy para allá\nC: Gracias 😊\nD: A ti, esperamos les guste. ¡Nos mandan foto! 😊' }
+    ],
+    // Preguntas frecuentes. {anticipo} se reemplaza por el % de Ajustes.
+    faqs: [
+      { id: 'seed-faq-1', order: 1, active: true, q: '¿Cuánto tarda mi pedido?', a: 'Depende de la cantidad y del diseño. Te confirmamos la fecha al cotizar; si lo necesitas para un día en especial, dínoslo desde el principio y lo planeamos.' },
+      { id: 'seed-faq-2', order: 2, active: true, q: '¿Hay pedido mínimo?', a: 'No: puedes pedir desde una pieza con precio de menudeo. A partir de cierta cantidad aplica precio de mayoreo; el cotizador te lo calcula al instante.' },
+      { id: 'seed-faq-3', order: 3, active: true, q: '¿Cómo pago?', a: 'Por transferencia o en efectivo. Para arrancar tu pedido pedimos un anticipo del {anticipo} % y el resto al entregar.' },
+      { id: 'seed-faq-4', order: 4, active: true, q: '¿Hacen entregas?', a: 'Sí. Nos vemos en un punto de entrega o te lo llevamos a domicilio. Pregúntanos por envíos a otras ciudades.' },
+      { id: 'seed-faq-5', order: 5, active: true, q: '¿Cómo les mando mi diseño?', a: 'Súbelo en el cotizador con “Ver cómo queda” o mándalo por WhatsApp. Lo ideal es PNG con fondo transparente, PDF o SVG. Si solo tienes una foto o un boceto, lo podemos vectorizar.' },
+      { id: 'seed-faq-6', order: 6, active: true, q: '¿Venden playeras sin diseño?', a: 'Sí, también vendemos prendas lisas. Pregúntanos por colores y tallas disponibles.' },
+      { id: 'seed-faq-7', order: 7, active: true, q: '¿Cómo cuido mi prenda estampada?', a: 'Lávala al revés con agua fría, sin cloro ni suavizante fuerte, y no planches directo sobre el estampado.' },
+      { id: 'seed-faq-8', order: 8, active: true, q: '¿Qué es la tarjeta Draguz?', a: 'Es tu tarjeta de cliente: escanea su QR, regístrala y acumula tus compras. Con tu primera compra entras al sorteo del mes y cada cierto número de compras te toca un descuento.' }
+    ],
+    gallery: [],
     stock: [
       { id: 'seed-st-1', name: 'Playera Draguz Classic', category: 'Playeras', price: 249, qty: 12, sizes: ['S', 'M', 'L', 'XL'], description: 'Playera negra con logo Draguz. Pieza de stock lista para entrega.', images: [ph('tee', '#0d0d10')], active: true },
       { id: 'seed-st-2', name: 'Playera Draguz Blanca', category: 'Playeras', price: 249, qty: 8, sizes: ['M', 'L', 'XL'], description: 'Playera blanca con logo Draguz.', images: [ph('tee', '#f4f4f4')], active: true },

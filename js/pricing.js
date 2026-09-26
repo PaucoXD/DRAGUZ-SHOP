@@ -31,7 +31,7 @@ window.Pricing = (function () {
       const p = catalog.find(x => x.id === l.productId); if (!p) return;
       const c = calcLine(l, p, extras);
       if (c.qty <= 0) return;
-      lines.push({ lid: l.lid, productId: p.id, name: p.name, cut: l.cut || '', color: l.color || '', sizes: l.sizes || {}, qty: c.qty, unit: c.unit, tier: c.tier, sizeExtraTotal: c.sizeExtraTotal, extras: c.extras, subtotal: c.subtotal, notes: l.notes || '' });
+      lines.push({ lid: l.lid, productId: p.id, name: p.name, cut: l.cut || '', color: l.color || '', sizes: l.sizes || {}, qty: c.qty, unit: c.unit, tier: c.tier, sizeExtraTotal: c.sizeExtraTotal, extras: c.extras, subtotal: c.subtotal, notes: l.notes || '', mockup: l.mockup || '', designId: l.designId || '' });
     });
     const total = lines.reduce((a, l) => a + l.subtotal, 0);
     const pct = +settings.anticipoPct || 0;
