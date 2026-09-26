@@ -50,6 +50,7 @@ window.DB = (function () {
         const i = arr.findIndex(x => x.id === obj.id); if (i >= 0) arr[i] = obj; else arr.push(obj);
         set(col, arr); return obj.id;
       },
+      async get(col, id) { const x = (await api.list(col)).find(o => o.id === id); return x || null; },
       async remove(col, id) { set(col, (get(col) || []).filter(x => x.id !== id)); },
       async getSettings() { return Object.assign({}, clone(window.SEED.settings), get('settings') || {}); },
       async saveSettings(s) { set('settings', s); },
@@ -113,6 +114,7 @@ window.DB = (function () {
       if (id) { await fs.collection(col).doc(id).set(data); return id; }
       return (await fs.collection(col).add(data)).id;
     },
+    async get(col, id) { const d = await fs.collection(col).doc(id).get(); return d.exists ? Object.assign({ id: d.id }, d.data()) : null; },
     async remove(col, id) { await fs.collection(col).doc(id).delete(); },
     async getSettings() {
       let s = {}; try { const d = await fs.doc('settings/main').get(); if (d.exists) s = d.data(); } catch (e) { }

@@ -39,3 +39,15 @@ Admin demo: entra con `admin@draguz.demo` (cualquier contraseña) → aparece el
 - **Cambiar textos del inicio / banners**: `js/app.js` (`SLIDES`, `renderPromos`) e `index.html`.
 - **Colores y tipografías**: variables al inicio de `css/styles.css` (siguen el manual de identidad: rojo #E3000F, morado #2A1B3D, índigo #2C275F, Montserrat).
 - Si cambias el logo, reemplaza `assets/img/logo.png` y regenera `js/logo-data.js` (versión base64 usada para el ticket).
+
+## Tarjetas de lealtad
+- **Admin → Tarjetas y lealtad → Generar tarjetas** crea códigos únicos (`DZ-0001-K7Q`). Descarga el **CSV** (código + link del QR) para la imprenta, o la **hoja con QR** para imprimir/guardar como PDF.
+- El cliente escanea el QR (`#/tarjeta/CÓDIGO`), la activa con su nombre y WhatsApp, y ve sus compras acumuladas.
+- Al marcar una cotización como **Cerrada (entregada)**, si trae tarjeta (o el WhatsApp coincide) se abre **Registrar compra**. También se registra a mano desde la tabla de tarjetas.
+- Cada **N** compras (por defecto la 8ª) lleva **X %** de descuento; la **1ª compra** entra al **sorteo del mes**. Todo se ajusta en **Admin → Ajustes**.
+
+## Inventario de prendas lisas
+- **Admin → Inventario lisas → Entrada de mercancía**: piezas por producto, corte, color y talla. Los cortes se definen en el producto del catálogo (campo *Cortes*).
+- Al pasar una cotización a **En proceso** se descuentan solas, **solo si alcanzan todas**; si se cancela, regresan. En la lista de cotizaciones verás **✔ Hay lisas / ✖ Faltan lisas**.
+
+> Tras actualizar el sitio, vuelve a copiar `firestore.rules` a Firebase → Firestore → Reglas → Publicar.

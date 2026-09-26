@@ -29,7 +29,7 @@
   const S_STD = ['S', 'M', 'L', 'XL', 'XXL'];
 
   window.SEED = {
-    settings: { id: 'main', whatsapp: '', anticipoPct: 50, validityDays: 7, tagline: 'Define your different' },
+    settings: { id: 'main', whatsapp: '', anticipoPct: 50, validityDays: 7, tagline: 'Define your different', loyaltyEvery: 8, loyaltyPct: 15, loyaltyMin: 0, rafflePrize: 'Una prenda personalizada' },
     catalog: [
       { id: 'seed-playera', order: 1, kind: 'tee', name: 'Playera algodón', category: 'Playeras', description: 'Playera de algodón cuello redondo lista para personalizar.', priceMenudeo: 149, priceMayoreo: 119, mayoreoMin: 12, sizes: S_STD, sizeExtra: { XXL: 20 }, colors: [C.negro, C.blanco, C.rojo, C.gris, C.indigo], images: [], active: true },
       { id: 'seed-polo', order: 2, kind: 'polo', name: 'Polo Dri-Fit', category: 'Playeras', description: 'Polo Dri-Fit 100% poliéster, ideal para uniformes y corporativo.', priceMenudeo: 196, priceMayoreo: 141, mayoreoMin: 12, sizes: S_STD, sizeExtra: { XXL: 20 }, colors: [C.negro, C.blanco, C.marino, C.rojo], images: [], active: true },

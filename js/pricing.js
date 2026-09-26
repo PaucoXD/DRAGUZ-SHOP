@@ -31,7 +31,7 @@ window.Pricing = (function () {
       const p = catalog.find(x => x.id === l.productId); if (!p) return;
       const c = calcLine(l, p, extras);
       if (c.qty <= 0) return;
-      lines.push({ lid: l.lid, name: p.name, color: l.color || '', sizes: l.sizes || {}, qty: c.qty, unit: c.unit, tier: c.tier, sizeExtraTotal: c.sizeExtraTotal, extras: c.extras, subtotal: c.subtotal, notes: l.notes || '' });
+      lines.push({ lid: l.lid, productId: p.id, name: p.name, cut: l.cut || '', color: l.color || '', sizes: l.sizes || {}, qty: c.qty, unit: c.unit, tier: c.tier, sizeExtraTotal: c.sizeExtraTotal, extras: c.extras, subtotal: c.subtotal, notes: l.notes || '' });
     });
     const total = lines.reduce((a, l) => a + l.subtotal, 0);
     const pct = +settings.anticipoPct || 0;
@@ -85,7 +85,7 @@ window.Ticket = (function () {
       ctx.font = F(800, 19); ctx.fillStyle = INK;
       wrap(ctx, l.name, W - 2 * PAD).forEach(t => { ctx.fillText(t, PAD, y); y += 24; });
       const sizes = Object.entries(l.sizes || {}).filter(([, n]) => +n > 0).map(([k, n]) => `${k}×${n}`).join('  ');
-      const meta = [l.color ? 'Color: ' + l.color : '', sizes ? 'Tallas: ' + sizes : ''].filter(Boolean).join('  ·  ');
+      const meta = [l.cut ? 'Corte: ' + l.cut : '', l.color ? 'Color: ' + l.color : '', sizes ? 'Tallas: ' + sizes : ''].filter(Boolean).join('  ·  ');
       if (meta) { ctx.font = F(500, 14); ctx.fillStyle = GRAY; wrap(ctx, meta, W - 2 * PAD).forEach(t => { ctx.fillText(t, PAD, y); y += 20; }); }
       ctx.font = F(600, 15); ctx.fillStyle = INK;
       ctx.fillText(`${l.qty} pzas × ${money(l.unit)}  (${l.tier})`, PAD, y);
