@@ -6,12 +6,12 @@
    ───────────────────────────────────────────────────────────── */
 window.DRAGUZ_CONFIG = {
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyA8GYn9qZVfjWrSE0eJfhsk7LScdaiKfyU",
+    authDomain: "draguz-shop-web.firebaseapp.com",
+    projectId: "draguz-shop-web",
+    storageBucket: "draguz-shop-web.firebasestorage.app",
+    messagingSenderId: "935025684574",
+    appId: "1:935025684574:web:694d7102813476579044cf"
   },
   // WhatsApp con lada país, sin + ni espacios. Ej: 5218112345678
   // (también se puede cambiar después desde Admin > Ajustes)
