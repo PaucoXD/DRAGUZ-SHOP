@@ -16,6 +16,7 @@
     const dpr = Math.min(window.devicePixelRatio || 1, mobile() ? 1.5 : 2);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';  // nunca ocupa espacio en la página, aunque falte el CSS
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
