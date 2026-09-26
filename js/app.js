@@ -12,7 +12,7 @@
   };
   const persist = () => {
     try { localStorage.setItem('dz_quote', JSON.stringify(S.quote)); }
-    catch (e) { try { localStorage.setItem('dz_quote', JSON.stringify(Object.assign({}, S.quote, { designs: {}, lines: S.quote.lines.map(l => Object.assign({}, l, { mockup: '' })) }))); } catch (e2) { } }
+    catch (e) { /* sin espacio en el navegador: la cotización sigue en memoria */ }
   };
 
   /* ───── utilidades UI ───── */
@@ -188,7 +188,6 @@
       ${activeExtras().length ? `<div class="cfg-block"><span class="lbl">Personalización y extras</span>${activeExtras().map(e => `<label class="check"><input type="checkbox" data-extra="${e.id}" ${d.extraIds.includes(e.id) ? 'checked' : ''}><span>${esc(e.name)}<em>+${money(e.price)} ${e.scope === 'unico' ? 'único' : 'c/u'}</em></span></label>`).join('')}</div>` : ''}
       <div class="cfg-block"><span class="lbl">Notas de esta línea (opcional)</span><textarea id="line-notes" rows="2" placeholder="Ubicación del diseño, colores de tinta, etc.">${esc(d.notes)}</textarea></div>
       <div class="live" id="live"></div>
-      <div class="cfg-block mk-cta">${d.mockup ? `<img src="${d.mockup}" alt="Vista previa de tu diseño"><div><b>Tu diseño está listo</b><span>Se enviará con tu solicitud.</span><div class="mk-cta-acts"><button class="link" data-act="mockup">Cambiar</button><button class="link" data-act="nomockup">Quitar</button></div></div>` : `<button class="btn ghost" data-act="mockup">👕 Ver cómo queda con tu diseño</button><span class="hint">Sube tu logo y velo sobre la prenda antes de cotizar.</span>`}</div>
       <button class="btn" data-act="add">Agregar a la cotización</button>`;
     updateLive();
   }
@@ -201,21 +200,11 @@
       + (!mayor && c.faltan ? `<br>Te faltan <b>${c.faltan}</b> pzas para precio de mayoreo (${money(p.priceMayoreo)} c/u).` : '')
       + `<span class="big">${money(c.subtotal)}</span>`;
   }
-  function openMockup() {
-    const p = S.catalog.find(x => x.id === S.draft.productId); if (!p) return;
-    window.Mockup.open({ product: p, color: S.draft.color, current: !!S.draft.mockup, onUse: r => {
-      const id = 'd' + Math.random().toString(36).slice(2, 8);
-      S.quote.designs = S.quote.designs || {}; S.quote.designs[id] = r.design;
-      Object.assign(S.draft, { mockup: r.mockup, designId: id, color: r.color });
-      if (r.side === 'back') S.draft.notes = (S.draft.notes ? S.draft.notes + ' · ' : '') + 'Diseño en la espalda';
-      renderConfig(); toast('Diseño listo: se enviará con tu solicitud');
-    } });
-  }
   function addLine() {
     const { p, c } = draftCalc();
     if (c.qty <= 0) { toast('Agrega al menos una pieza.', true); return; }
     const d = S.draft;
-    S.quote.lines.push({ lid: Math.random().toString(36).slice(2, 9), productId: d.productId, color: d.color, cut: d.cut || '', sizes: Object.fromEntries(Object.entries(d.sizes).filter(([, n]) => +n > 0)), qty: (p.sizes || []).length ? 0 : d.qty, extraIds: d.extraIds.slice(), notes: d.notes, mockup: d.mockup || '', designId: d.designId || '' });
+    S.quote.lines.push({ lid: Math.random().toString(36).slice(2, 9), productId: d.productId, color: d.color, cut: d.cut || '', sizes: Object.fromEntries(Object.entries(d.sizes).filter(([, n]) => +n > 0)), qty: (p.sizes || []).length ? 0 : d.qty, extraIds: d.extraIds.slice(), notes: d.notes });
     persist(); S.draft = null; renderQProducts(); renderConfig(); refreshSummary();
     toast('Agregado a tu cotización'); $('#q-right').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -226,7 +215,7 @@
     const cnt = $('#quote-count'); cnt.textContent = n; cnt.dataset.n = n;
     $('#q-lines').innerHTML = n ? q.lines.map(l => {
       const sz = Object.entries(l.sizes).filter(([, v]) => +v > 0).map(([k, v]) => `${k}×${v}`).join(' ');
-      return `<div class="ql ${l.mockup ? 'has-mk' : ''}"><button class="rm" data-rm="${l.lid}" aria-label="Quitar">×</button>${l.mockup ? `<img class="ql-mk" src="${l.mockup}" alt="">` : ''}<b>${esc(l.name)}</b><small>${[l.cut, l.color, sz].filter(Boolean).map(esc).join(' · ')}<br>${l.qty} pzas · ${l.tier} ${money(l.unit)} c/u${l.extras.length ? '<br>+ ' + l.extras.map(e => esc(e.name)).join(', ') : ''}</small><div class="sub"><span></span><span>${money(l.subtotal)}</span></div></div>`;
+      return `<div class="ql"><button class="rm" data-rm="${l.lid}" aria-label="Quitar">×</button><b>${esc(l.name)}</b><small>${[l.cut, l.color, sz].filter(Boolean).map(esc).join(' · ')}<br>${l.qty} pzas · ${l.tier} ${money(l.unit)} c/u${l.extras.length ? '<br>+ ' + l.extras.map(e => esc(e.name)).join(', ') : ''}</small><div class="sub"><span></span><span>${money(l.subtotal)}</span></div></div>`;
     }).join('') : '<div class="q-empty">Aún no agregas nada. Elige un producto a la izquierda.</div>';
     $('#q-totals').innerHTML = n ? `<div class="tot"><span>Total</span><b>${money(q.total)}</b></div>${q.anticipoPct ? `<div class="tot-sub"><span>Anticipo ${q.anticipoPct} %</span><span>${money(q.anticipo)}</span></div>` : ''}<div class="tot-sub"><span>Vigencia</span><span>${q.validityDays} días</span></div>` : '';
     ['q-send', 'q-wa', 'q-dl', 'q-clear'].forEach(id => { $('#' + id).disabled = !n; });
@@ -250,7 +239,7 @@
   }
   function waText(q) {
     const L = q.lines.map(l => { const sz = Object.entries(l.sizes).filter(([, v]) => +v > 0).map(([k, v]) => `${k}×${v}`).join(' '); return `• ${l.name}${l.cut ? ' ' + l.cut : ''}${l.color ? ' (' + l.color + ')' : ''} — ${l.qty} pzas${sz ? ' [' + sz + ']' : ''} = ${money(l.subtotal)}`; }).join('\n');
-    return `Hola Draguz Shop, quiero cotizar:\n${L}\nTotal: ${money(q.total)}\nFolio: ${q.folio}${q.customer.name ? '\nNombre: ' + q.customer.name : ''}${q.customer.notes ? '\nNotas: ' + q.customer.notes : ''}${L.normCode(S.quote.cardCode) ? '\nTarjeta: ' + L.normCode(S.quote.cardCode) : ''}${q.lines.some(l => l.mockup) ? '\n(Ya armé la vista previa de mi diseño, te la mando en seguida)' : ''}`;
+    return `Hola Draguz Shop, quiero cotizar:\n${L}\nTotal: ${money(q.total)}\nFolio: ${q.folio}${q.customer.name ? '\nNombre: ' + q.customer.name : ''}${q.customer.notes ? '\nNotas: ' + q.customer.notes : ''}${L.normCode(S.quote.cardCode) ? '\nTarjeta: ' + L.normCode(S.quote.cardCode) : ''}`;
   }
   async function sendRequest() {
     const q = snap(); if (!q.lines.length) return;
@@ -265,13 +254,87 @@
       const who = S.user
         ? { uid: S.user.uid, email: S.user.email, name: q.customer.name || S.user.name }
         : { uid: null, guest: true, email: '', name: q.customer.name.trim(), customer: Object.assign({}, q.customer, { name: q.customer.name.trim(), phone: q.customer.phone.replace(/\D/g, '') }) };
-      const used = [...new Set(q.lines.map(l => l.designId).filter(Boolean))];
-      let doc = Object.assign({}, q, who, { designs: Object.fromEntries(used.map(id => [id, (S.quote.designs || {})[id]]).filter(x => x[1])), cardCode: L.normCode(S.quote.cardCode), status: 'nueva', createdAt: Date.now() });
-      if (JSON.stringify(doc).length > 900000) { doc.designs = {}; toast('Tu diseño original es muy pesado: mándalo por WhatsApp. La vista previa sí se envió.', true); }
-      if (JSON.stringify(doc).length > 900000) doc.lines = doc.lines.map(l => Object.assign({}, l, { mockup: '' }));
+      const doc = Object.assign({}, q, who, { cardCode: L.normCode(S.quote.cardCode), status: 'nueva', createdAt: Date.now() });
       await DB.save('quotes', doc);
-      toast('¡Solicitud enviada! ' + q.folio + (S.user ? '' : ' · Te contactaremos por WhatsApp')); S.quote = { lines: [], customer: S.quote.customer, cardCode: S.quote.cardCode, designs: {} }; persist(); refreshSummary();
+      try { await DB.save('tracking', trackDoc(doc)); } catch (e) { console.warn('seguimiento', e); }
+      notifyOwner(doc); showSent(doc);
+      S.quote = { lines: [], customer: S.quote.customer, cardCode: S.quote.cardCode }; persist(); refreshSummary();
     } catch (e) { toast(DB.friendlyError(e), true); } finally { btn.disabled = false; }
+  }
+
+  /* ───── seguimiento y avisos ───── */
+  const siteUrl = () => location.origin + location.pathname.replace(/index\.html$/, '');
+  const trackUrl = folio => siteUrl() + '#/pedido/' + folio;
+  // Datos mínimos y públicos del pedido (sin nombre ni teléfono), consultables con el folio
+  const trackDoc = q => ({ id: q.folio, folio: q.folio, status: q.status || 'nueva', total: +q.total || 0, anticipo: +q.anticipo || 0, items: (q.lines || []).map(l => ({ name: String(l.name || '').slice(0, 80), qty: +l.qty || 0 })).slice(0, 50), createdAt: q.createdAt || Date.now(), updatedAt: Date.now() });
+  // Aviso push al celular del dueño con ntfy (sin nombre ni teléfono del cliente)
+  function notifyOwner(q, test) {
+    const topic = String(S.settings.ntfyTopic || '').trim(); if (!topic) return Promise.resolve(false);
+    const pz = (q.lines || []).reduce((a, l) => a + (+l.qty || 0), 0);
+    const body = test ? { topic, title: 'Prueba de Draguz Shop', message: 'Así te llegarán los avisos de cotizaciones nuevas 🔔', tags: ['bell'], click: siteUrl() + '#/admin' }
+      : { topic, title: 'Nueva cotización ' + q.folio, message: `${money(q.total)} · ${pz} pzas${q.cardCode ? ' · con tarjeta' : ''}`, tags: ['shirt'], priority: 4, click: siteUrl() + '#/admin' };
+    return fetch('https://ntfy.sh/', { method: 'POST', body: JSON.stringify(body) }).then(r => r.ok).catch(() => false);
+  }
+  function showSent(q) {
+    const url = trackUrl(q.folio);
+    const m = openModal(`<h3 class="m-title">¡Solicitud enviada!</h3><p class="m-sub">Tu folio es <b>${esc(q.folio)}</b>. ${S.user ? 'Te contactaremos pronto.' : 'Te contactaremos por WhatsApp.'}</p>
+      <div class="sent-box"><span class="tag">Sigue tu pedido aquí</span><a href="#/pedido/${esc(q.folio)}" id="sent-link">${esc(url)}</a></div>
+      <div class="f-actions"><button class="btn ghost" id="sent-copy">Copiar link</button><button class="btn" id="sent-wa">Avisar por WhatsApp</button></div>`);
+    $('#sent-link', m).onclick = () => closeModal();
+    $('#sent-copy', m).onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Link copiado')).catch(() => toast(url)); };
+    $('#sent-wa', m).onclick = () => openWA(`Hola Draguz Shop, acabo de enviar mi solicitud ${q.folio} (${money(q.total)}).`);
+  }
+
+  // Página pública: #/pedido/FOLIO
+  const normFolio = t => { const c = String(t || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); const m = c.match(/^DZ(\d{6})([A-Z0-9]{4})$/); return m ? `DZ-${m[1]}-${m[2]}` : ''; };
+  const STEPS = [['nueva', 'Recibida', 'Revisamos tu solicitud'], ['cotizada', 'Cotizada', 'Te enviamos precio y detalles'], ['proceso', 'En producción', 'Estamos haciendo tu pedido'], ['lista', 'Lista para entregar', 'Pasa por ella o te la llevamos'], ['cerrada', 'Entregada', '¡Gracias por tu compra!']];
+  async function renderTrack(raw) {
+    const v = $('#view-track'), folio = normFolio(raw);
+    const head = '<span class="kicker"><i class="slash"></i>Seguimiento</span>';
+    if (!folio) {
+      v.innerHTML = `${head}<h1>Sigue tu pedido</h1><p class="sub muted">Escribe el folio de tu cotización (viene en tu ticket, por ejemplo DZ-260926-AB12).</p>
+        <form id="trk-f" class="card-find"><input name="f" placeholder="DZ-000000-XXXX" required maxlength="16" autocomplete="off" value="${esc(raw || '')}"><button class="btn">Ver mi pedido</button></form>${raw ? '<p class="err">Ese folio no es válido. Revísalo.</p>' : ''}`;
+      $('#trk-f').onsubmit = e => { e.preventDefault(); const t = String(new FormData(e.target).get('f') || '').trim(); location.hash = '#/pedido/' + (normFolio(t) || encodeURIComponent(t)); };
+      return;
+    }
+    v.innerHTML = `${head}<h1>Pedido ${esc(folio)}</h1><div class="q-empty">Cargando…</div>`;
+    let t = null; try { t = await DB.get('tracking', folio); } catch (e) { }
+    if (!t) { v.innerHTML = `${head}<h1>Pedido ${esc(folio)}</h1><p class="err">No encontramos ese pedido. Revisa el folio o escríbenos por WhatsApp.</p><div class="card-actions"><a class="btn ghost" href="#/pedido">Probar otro folio</a><button class="btn" id="trk-wa">WhatsApp</button></div>`; $('#trk-wa').onclick = () => openWA(`Hola Draguz Shop, quiero saber de mi pedido ${folio}.`); return; }
+    const idx = STEPS.findIndex(s => s[0] === t.status), cancel = t.status === 'cancelada';
+    v.innerHTML = `${head}<h1>Pedido ${esc(folio)}</h1>
+      ${cancel ? '<div class="note">Este pedido fue cancelado. Si crees que es un error, escríbenos.</div>' : `<ol class="trk">${STEPS.map((s, i) => `<li class="${i < idx ? 'done' : i === idx ? 'now' : ''}"><b>${s[1]}</b><span>${s[2]}</span></li>`).join('')}</ol>`}
+      <div class="trk-card"><h3 class="lbl">Tu pedido</h3>${(t.items || []).map(it => `<div class="trk-row"><span>${esc(it.name)}</span><b>${it.qty} pzas</b></div>`).join('')}
+        <div class="trk-row tot"><span>Total</span><b>${money(t.total)}</b></div>${t.anticipo ? `<div class="trk-row"><span>Anticipo</span><span>${money(t.anticipo)}</span></div>` : ''}
+        <p class="tag" style="margin-top:10px;text-transform:none;letter-spacing:.02em">Actualizado: ${new Date(t.updatedAt || t.createdAt).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}</p></div>
+      <div class="card-actions"><button class="btn" id="trk-wa">Preguntar por WhatsApp</button><a class="btn ghost" href="#/cotizador">Nueva cotización</a></div>`;
+    $('#trk-wa').onclick = () => openWA(`Hola Draguz Shop, quiero saber de mi pedido ${folio}.`);
+  }
+
+  // Panel: aviso en vivo de cotizaciones nuevas (contador, sonido y notificación)
+  let unwatch = null, known = null;
+  const baseTitle = document.title;
+  function setBadge(n) { const b = $('#btn-admin'); if (b) b.dataset.count = n || ''; document.title = (n ? `(${n}) ` : '') + baseTitle; }
+  function chime() {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)(), t0 = ac.currentTime;
+      [880, 1318].forEach((f, i) => { const o = ac.createOscillator(), g = ac.createGain(), t = t0 + i * 0.16; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.4); });
+    } catch (e) { }
+  }
+  function watchQuotes(on) {
+    if (!on) { if (unwatch) unwatch(); unwatch = null; known = null; setBadge(0); return; }
+    if (unwatch || !DB.watch) return;
+    unwatch = DB.watch('quotes', list => {
+      setBadge(list.length);
+      const fresh = known ? list.filter(q => !known.has(q.id)) : [];
+      known = new Set(list.map(q => q.id));
+      if (!fresh.length) return;
+      const q = fresh[0], msg = (fresh.length > 1 ? fresh.length + ' cotizaciones nuevas' : 'Nueva cotización ' + q.folio) + ' · ' + money(fresh.reduce((a, x) => a + (+x.total || 0), 0));
+      chime(); toast('🔔 ' + msg);
+      if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        try { const n = new Notification('Draguz Shop', { body: msg, icon: 'assets/img/favicon.png', tag: 'dz-quote' }); n.onclick = () => { window.focus(); location.hash = '#/admin'; }; } catch (e) { }
+      }
+      if (window.Admin && window.Admin.onNewQuotes) window.Admin.onNewQuotes();
+    }, ['status', 'nueva']);
   }
 
   /* ───── AUTH ───── */
@@ -295,7 +358,7 @@
   }
 
   /* ───── CUENTA ───── */
-  const ST = { nueva: 'Nueva', proceso: 'En proceso', cotizada: 'Cotizada', cerrada: 'Cerrada', cancelada: 'Cancelada' };
+  const ST = { nueva: 'Nueva', cotizada: 'Cotizada', proceso: 'En producción', lista: 'Lista para entregar', cerrada: 'Entregada', cancelada: 'Cancelada' };
   async function renderAccount() {
     const v = $('#view-account');
     if (!S.user) { v.innerHTML = '<span class="kicker"><i class="slash"></i>Mi cuenta</span><h1>Entra a tu cuenta</h1><p class="sub" style="color:var(--mute);margin-bottom:22px">Inicia sesión para ver tus cotizaciones.</p><button class="btn" id="acc-login">Entrar o crear cuenta</button>'; $('#acc-login').onclick = () => openAuth('login'); return; }
@@ -303,7 +366,7 @@
     $('#acc-out').onclick = async () => { await DB.signOut(); location.hash = '#/'; };
     try {
       const qs = (await DB.list('quotes', { mine: true })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      $('#acc-list').innerHTML = qs.length ? `<table class="tbl"><thead><tr><th>Folio</th><th>Fecha</th><th>Piezas</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody>${qs.map(q => `<tr><td><b>${esc(q.folio)}</b></td><td>${new Date(q.createdAt || q.date).toLocaleDateString('es-MX')}</td><td>${q.lines.reduce((a, l) => a + l.qty, 0)}</td><td>${money(q.total)}</td><td><span class="st ${q.status}">${ST[q.status] || q.status}</span></td><td class="acts"><button class="btn ghost sm" data-ticket="${q.id}">Ver ticket</button></td></tr>`).join('')}</tbody></table>` : '<div class="q-empty" style="border:0">Todavía no has enviado cotizaciones.</div>';
+      $('#acc-list').innerHTML = qs.length ? `<table class="tbl"><thead><tr><th>Folio</th><th>Fecha</th><th>Piezas</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody>${qs.map(q => `<tr><td><b>${esc(q.folio)}</b></td><td>${new Date(q.createdAt || q.date).toLocaleDateString('es-MX')}</td><td>${q.lines.reduce((a, l) => a + l.qty, 0)}</td><td>${money(q.total)}</td><td><span class="st ${q.status}">${ST[q.status] || q.status}</span></td><td class="acts"><button class="btn ghost sm" data-ticket="${q.id}">Ver ticket</button><a class="btn ghost sm" href="#/pedido/${esc(q.folio)}" style="margin-left:6px">Seguir</a></td></tr>`).join('')}</tbody></table>` : '<div class="q-empty" style="border:0">Todavía no has enviado cotizaciones.</div>';
       $$('[data-ticket]', v).forEach(b => b.onclick = () => showTicket(qs.find(q => q.id === b.dataset.ticket)));
     } catch (e) { $('#acc-list').innerHTML = '<div class="q-empty" style="border:0">' + esc(DB.friendlyError(e)) + '</div>'; }
   }
@@ -388,10 +451,11 @@
 
   /* ───── RUTAS ───── */
   const SECTIONS = ['stock', 'personaliza', 'cotizador', 'proceso', 'trabajos', 'opiniones', 'faq', 'contacto'];
-  function show(name) { ['home', 'account', 'admin', 'card'].forEach(n => { $('#view-' + n).hidden = n !== name; }); document.body.classList.toggle('in-admin', name === 'admin'); }
+  function show(name) { ['home', 'account', 'admin', 'card', 'track'].forEach(n => { $('#view-' + n).hidden = n !== name; }); document.body.classList.toggle('in-admin', name === 'admin'); }
   function route() {
     const h = location.hash.replace(/^#\/?/, '');
     if (h === 'cuenta') { show('account'); renderAccount(); window.scrollTo(0, 0); }
+    else if (h === 'pedido' || h.startsWith('pedido/')) { show('track'); renderTrack(decodeURIComponent(h.slice(7))); window.scrollTo(0, 0); }
     else if (h === 'tarjeta' || h.startsWith('tarjeta/')) { show('card'); renderCard(decodeURIComponent(h.slice(8))); window.scrollTo(0, 0); }
     else if (h === 'admin') {
       if (!S.isAdmin && S.adminPending) { show('home'); return; }
@@ -468,8 +532,6 @@
       const ct = e.target.closest('[data-cut]'); if (ct) { S.draft.cut = ct.dataset.cut; renderConfig(); return; }
       const a = e.target.closest('[data-act]'); if (!a) return;
       if (a.dataset.act === 'cancel') { S.draft = null; renderQProducts(); renderConfig(); } else if (a.dataset.act === 'add') addLine();
-      else if (a.dataset.act === 'mockup') openMockup();
-      else if (a.dataset.act === 'nomockup') { S.draft.mockup = ''; S.draft.designId = ''; renderConfig(); }
     });
     cfg.addEventListener('input', e => {
       const t = e.target;
@@ -497,6 +559,7 @@
     renderHero(); goSlide(0); bind(); bindMobile();
     DB.onAuth((u, admin, pending) => {
       S.user = u; S.isAdmin = !!admin; S.adminPending = !!pending; $('#btn-admin').hidden = !admin; $('#acc-dot').hidden = !u;
+      if (!pending) watchQuotes(!!admin);
       $('#btn-account').title = u ? u.email : 'Entrar';
       if (window.__booted) route();
     });
@@ -505,5 +568,5 @@
     renderHome(); window.__booted = true; route();
   }
 
-  window.DZ = { S, DB, $, $$, money, esc, toast, openModal, closeModal, reload, resizeImage, showTicket, boot, imgOf };
+  window.DZ = { S, DB, $, $$, money, esc, toast, openModal, closeModal, reload, resizeImage, showTicket, boot, imgOf, trackDoc, trackUrl, notifyOwner, siteUrl };
 })();

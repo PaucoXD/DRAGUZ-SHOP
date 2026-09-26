@@ -51,6 +51,13 @@ window.DB = (function () {
         set(col, arr); return obj.id;
       },
       async get(col, id) { const x = (await api.list(col)).find(o => o.id === id); return x || null; },
+      // Escucha cambios (en demo se revisa cada 3 s y cuando otra pestaña guarda)
+      watch(col, cb, where) {
+        const run = async () => { let a = await api.list(col); if (where) a = a.filter(x => x[where[0]] === where[1]); cb(a); };
+        const onSt = e => { if (e.key === 'dz_' + col) run(); };
+        const t = setInterval(run, 3000); window.addEventListener('storage', onSt); run();
+        return () => { clearInterval(t); window.removeEventListener('storage', onSt); };
+      },
       async remove(col, id) { set(col, (get(col) || []).filter(x => x.id !== id)); },
       async getSettings() { return Object.assign({}, clone(window.SEED.settings), get('settings') || {}); },
       async saveSettings(s) { set('settings', s); },
@@ -115,6 +122,11 @@ window.DB = (function () {
       return (await fs.collection(col).add(data)).id;
     },
     async get(col, id) { const d = await fs.collection(col).doc(id).get(); return d.exists ? Object.assign({ id: d.id }, d.data()) : null; },
+    // Escucha cambios en tiempo real
+    watch(col, cb, where) {
+      let ref = fs.collection(col); if (where) ref = ref.where(where[0], '==', where[1]);
+      return ref.onSnapshot(snap => cb(snap.docs.map(d => Object.assign({ id: d.id }, d.data()))), e => console.warn('watch', col, e));
+    },
     async remove(col, id) { await fs.collection(col).doc(id).delete(); },
     async getSettings() {
       let s = {}; try { const d = await fs.doc('settings/main').get(); if (d.exists) s = d.data(); } catch (e) { }

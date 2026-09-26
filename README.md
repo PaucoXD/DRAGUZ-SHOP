@@ -57,7 +57,10 @@ Admin demo: entra con `admin@draguz.demo` (cualquier contraseña) → aparece el
 - Opiniones: escribe la conversación con una línea por mensaje (`C:` cliente, `D:` Draguz) y usa solo iniciales. No publiques capturas con teléfonos, fotos de perfil o datos de pago.
 - La sección **Trabajos reales** aparece en cuanto subes la primera foto.
 
-## Vista previa del diseño
-En el cotizador, el cliente pulsa **Ver cómo queda con tu diseño**, sube su logo y lo acomoda sobre la prenda del color elegido. La vista previa y el diseño (PNG reducido) viajan con la solicitud; en **Admin → Cotizaciones** aparece el botón **🎨 Diseño** para verlos y descargarlos.
+## Avisos, WhatsApp y seguimiento
+- **Cotización nueva:** con sesión de admin, el botón **ADMIN** y la pestaña del navegador muestran cuántas hay nuevas, en tiempo real, con sonido. En **Ajustes → Avisos** activa las notificaciones del navegador.
+- **Aviso al celular (gratis):** en **Ajustes → Avisos** pulsa **Generar**, instala la app **ntfy**, suscríbete a ese canal y guarda. Llega folio, total y piezas (sin datos del cliente). El canal es visible para quien lea el código del sitio, así que no pongas datos sensibles en él.
+- **WhatsApp de un toque:** en cada cotización, botón **WhatsApp** con plantillas (lista, anticipo, en producción, lista para entregar, gracias). Pueden actualizar el estado al enviarlas. Los textos se editan en **Ajustes → Mensajes de WhatsApp**.
+- **Seguimiento:** el cliente ve su pedido en `#/pedido/FOLIO` (link que recibe al enviar su solicitud y en los mensajes). Solo muestra estado, productos, total y anticipo.
 
 > Al cambiar CSS o JS, sube el número `?v=` en `index.html` para que los navegadores descarguen la versión nueva.

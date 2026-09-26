@@ -1,10 +1,10 @@
 /* Panel de administración */
 window.Admin = (function () {
   'use strict';
-  const { S, DB, $, $$, money, esc, toast, openModal, closeModal, reload, resizeImage, showTicket } = window.DZ;
+  const { S, DB, $, $$, money, esc, toast, openModal, closeModal, reload, resizeImage, showTicket, trackDoc, trackUrl, notifyOwner } = window.DZ;
   const clone = o => JSON.parse(JSON.stringify(o));
   const TABS = [['resumen', 'Resumen'], ['cotizaciones', 'Cotizaciones'], ['tarjetas', 'Tarjetas y lealtad'], ['lisas', 'Inventario lisas'], ['contenido', 'Galería, opiniones y FAQ'], ['stock', 'Stock'], ['catalogo', 'Catálogo personalizable'], ['extras', 'Extras y estampados'], ['ajustes', 'Ajustes']];
-  const STATUS = { nueva: 'Nueva', cotizada: 'Cotizada', proceso: 'En proceso', cerrada: 'Cerrada (entregada)', cancelada: 'Cancelada' };
+  const STATUS = { nueva: 'Nueva', cotizada: 'Cotizada', proceso: 'En producción', lista: 'Lista para entregar', cerrada: 'Entregada', cancelada: 'Cancelada' };
   const KINDS = [['tee', 'Playera'], ['polo', 'Polo'], ['hoodie', 'Hoodie'], ['cap', 'Gorra'], ['mug', 'Taza'], ['bag', 'Bolsa'], ['sticker', 'Sticker']];
   let tab = 'resumen', quotes = [];
 
@@ -133,7 +133,7 @@ window.Admin = (function () {
     return `<div class="adm-h"><h2>Cotizaciones</h2></div><div class="tblwrap"><table class="tbl"><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Piezas</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody>
       ${quotes.length ? quotes.map(q => `<tr><td><b>${esc(q.folio)}</b></td><td>${new Date(q.createdAt || q.date).toLocaleDateString('es-MX')}</td><td>${esc(q.name || q.customer.name || '—')}<br><span class="tag">${[q.email ? esc(q.email) : '', q.customer && q.customer.phone ? `<a href="${waLink(q.customer.phone)}" target="_blank" rel="noopener" style="color:#25D366">${esc(q.customer.phone)}</a>` : '', q.guest ? 'sin cuenta' : ''].filter(Boolean).join(' · ')}</span></td><td>${q.lines.reduce((a, l) => a + l.qty, 0)}${stockBadge(q)}</td><td><b>${money(q.total)}</b>${cardBadge(q)}</td>
       <td><select data-st="${q.id}">${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${q.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
-      <td><div class="acts">${hasDesign(q) ? `<button class="btn sm" data-design="${q.id}">🎨 Diseño</button>` : ''}<button class="btn ghost sm" data-ticket="${q.id}">Ticket</button><button class="btn danger sm" data-delq="${q.id}">Borrar</button></div></td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--mute);padding:36px">Aún no llegan solicitudes.</td></tr>'}
+      <td><div class="acts"><button class="btn sm wa-btn" data-wa="${q.id}" ${String((q.customer && q.customer.phone) || '').replace(/\D/g, '').length >= 10 ? '' : 'disabled title="Sin WhatsApp del cliente"'}>WhatsApp</button>${hasDesign(q) ? `<button class="btn ghost sm" data-design="${q.id}">🎨 Diseño</button>` : ''}<button class="btn ghost sm" data-ticket="${q.id}">Ticket</button><button class="btn danger sm" data-delq="${q.id}">Borrar</button></div></td></tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--mute);padding:36px">Aún no llegan solicitudes.</td></tr>'}
       </tbody></table></div>`;
   }
 
@@ -158,6 +158,13 @@ window.Admin = (function () {
       <div><label class="lbl">Descuento (%)</label><input type="number" name="loyaltyPct" min="0" max="100" value="${L.conf(s).pct}"></div>
       <div><label class="lbl">Compra mínima para contar (MXN)</label><input type="number" name="loyaltyMin" min="0" value="${L.conf(s).min}"><small style="color:var(--dim)">0 = cualquier compra cuenta.</small></div>
       <div><label class="lbl">Premio del sorteo mensual</label><input name="rafflePrize" maxlength="80" value="${esc(s.rafflePrize || '')}" placeholder="Una prenda personalizada"></div>
+      <h3 class="lbl" style="margin-top:18px;color:var(--red)">Avisos de cotizaciones nuevas</h3>
+      <div><label class="lbl">En este dispositivo</label><button type="button" class="btn ghost sm" id="nt-perm">${notifLabel()}</button><small style="display:block;color:var(--dim);margin-top:6px">Suena y aparece un aviso cuando llega una cotización mientras tienes el sitio abierto (el contador en el botón ADMIN siempre está activo).</small></div>
+      <div><label class="lbl">Aviso al celular (app ntfy, gratis)</label><div class="nt-row"><input name="ntfyTopic" id="nt-topic" value="${esc(s.ntfyTopic || '')}" placeholder="Pulsa Generar" maxlength="64"><button type="button" class="btn ghost sm" id="nt-gen">Generar</button><button type="button" class="btn ghost sm" id="nt-test">Probar</button></div>
+        <small style="display:block;color:var(--dim);margin-top:6px">1) Instala la app <b>ntfy</b> (Android o iPhone). 2) Toca <b>+</b> y suscríbete a este canal. 3) Guarda los ajustes. Te llegará folio, total y piezas, sin datos del cliente. Déjalo vacío para apagarlo.</small></div>
+      <h3 class="lbl" style="margin-top:18px;color:var(--red)">Mensajes de WhatsApp</h3>
+      ${waTemplates().map(t => `<div><label class="lbl">${esc(t.label)}</label><textarea name="wa_${t.id}" rows="3">${esc(t.text)}</textarea></div>`).join('')}
+      <small style="color:var(--dim)">Puedes usar: {nombre} {folio} {total} {anticipo} {resta} {seguimiento} {tarjeta}. Borra un texto para volver al original.</small>
       <button class="btn" style="justify-self:start">Guardar ajustes</button></form>
       <h3 class="lbl" style="margin-top:38px">Datos</h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost sm" id="d-seed">Cargar datos de ejemplo</button><button class="btn ghost sm" id="d-exp">Exportar catálogo (JSON)</button><button class="btn ghost sm" id="d-imp">Importar catálogo (JSON)</button>${DB.mode === 'demo' ? '<button class="btn danger sm" id="d-reset">Restablecer demo</button>' : ''}<input type="file" id="d-file" accept="application/json" hidden></div>
@@ -422,7 +429,7 @@ window.Admin = (function () {
   }
   const needLabel = n => [n.name, n.cut, n.color, n.size ? 'talla ' + n.size : ''].filter(Boolean).join(' · ');
 
-  const PRE = ['nueva', 'cotizada', 'cancelada'], POST = ['proceso', 'cerrada'];
+  const PRE = ['nueva', 'cotizada', 'cancelada'], POST = ['proceso', 'lista', 'cerrada'];
   async function changeStatus(q, to, sel) {
     const from = q.status; if (from === to) return;
     const upd = Object.assign({}, q, { status: to }), msgs = [];
@@ -446,6 +453,7 @@ window.Admin = (function () {
         msgs.push(`Regresaron ${q.stockUsed.reduce((a, u) => a + u.qty, 0)} piezas al inventario`); upd.stockUsed = [];
       }
       await DB.save('quotes', upd); Object.assign(q, upd);
+      try { await DB.save('tracking', trackDoc(q)); } catch (e) { console.warn('seguimiento', e); }  // lo que ve el cliente en #/pedido
       toast(['Estado actualizado'].concat(msgs).join(' · '));
       // Al cerrar la venta: ofrecer sumarla a la tarjeta del cliente
       if (to === 'cerrada' && !q.purchaseId) {
@@ -466,6 +474,42 @@ window.Admin = (function () {
       <p class="tag" style="margin-top:12px;text-transform:none;letter-spacing:.02em">El diseño original viene en PNG (reducido para caber en la cotización). Para imprimir en grande pide al cliente el archivo en alta resolución.</p>`, { wide: true });
     return m;
   }
+  /* ── mensajes de WhatsApp de un toque ── */
+  const WA_DEFAULT = [
+    { id: 'cotizada', label: 'Cotización lista', status: 'cotizada', text: 'Hola {nombre} 👋 Tu cotización {folio} de Draguz Shop está lista: {total}. Para arrancar necesitamos un anticipo de {anticipo}. ¿Te la confirmamos? Aquí puedes seguir tu pedido: {seguimiento}' },
+    { id: 'anticipo', label: 'Recordatorio de anticipo', status: '', text: 'Hola {nombre}, te recuerdo el anticipo de {anticipo} para arrancar tu pedido {folio}. En cuanto lo recibamos lo ponemos en producción 🙌' },
+    { id: 'proceso', label: 'En producción', status: 'proceso', text: '¡Hola {nombre}! Tu pedido {folio} ya está en producción 🔥 Te avisamos en cuanto quede. {seguimiento}' },
+    { id: 'lista', label: 'Listo para entregar', status: 'lista', text: '¡{nombre}, ya quedó tu pedido {folio}! 🙌 ¿Pasas por él o te lo llevamos? Resta por pagar: {resta}.' },
+    { id: 'gracias', label: 'Gracias + pide foto', status: 'cerrada', text: 'Gracias por tu compra {nombre} 😊 Esperamos que te encante. ¡Mándanos foto o etiquétanos! {tarjeta}' }
+  ];
+  const waTemplates = () => WA_DEFAULT.map(t => Object.assign({}, t, { text: ((S.settings.waTemplates || {})[t.id]) || t.text }));
+  function fillTemplate(text, q) {
+    const first = String(q.name || (q.customer && q.customer.name) || '').trim().split(/\s+/)[0] || '';
+    const ant = +q.anticipo || 0, total = +q.total || 0;
+    const card = window.Loyalty.normCode(q.cardCode);
+    const vars = { nombre: first, folio: q.folio, total: money(total), anticipo: money(ant), resta: money(Math.max(0, total - ant)), seguimiento: trackUrl(q.folio), tarjeta: card ? 'Tu tarjeta: ' + window.Loyalty.cardUrl(card) : '' };
+    return String(text).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)).replace(/ {2,}/g, ' ').replace(/\s+([.,!?])/g, '$1').trim();
+  }
+  function openWaMenu(q) {
+    const phone = String((q.customer && q.customer.phone) || '').replace(/\D/g, '');
+    if (phone.length < 10) { toast('Esta cotización no tiene WhatsApp del cliente.', true); return; }
+    const tpls = waTemplates();
+    const m = openModal(`<h3 class="m-title">WhatsApp · ${esc(q.folio)}</h3><p class="m-sub">${esc(q.name || (q.customer && q.customer.name) || '')} · ${esc(phone)} · estado actual: <b>${esc(STATUS[q.status] || q.status)}</b></p>
+      <div class="wa-tpls">${tpls.map(t => `<button class="wa-tpl" data-tpl="${t.id}"><b>${esc(t.label)}</b><span>${esc(fillTemplate(t.text, q))}</span>${t.status && t.status !== q.status ? `<small>y cambia el estado a “${esc(STATUS[t.status])}”</small>` : ''}</button>`).join('')}</div>
+      <label class="check" style="margin-top:14px"><input type="checkbox" id="wa-st" checked><span>Actualizar el estado al enviar</span></label>
+      <p class="tag" style="margin-top:10px;text-transform:none;letter-spacing:.02em">Los textos se editan en Ajustes → Mensajes de WhatsApp.</p>`, { wide: true });
+    m.onclick = async e => {
+      const b = e.target.closest('[data-tpl]'); if (!b) return;
+      const t = tpls.find(x => x.id === b.dataset.tpl), upd = $('#wa-st', m).checked && t.status && t.status !== q.status;
+      window.open(waLink(phone) + '?text=' + encodeURIComponent(fillTemplate(t.text, q)), '_blank', 'noopener');
+      closeModal();
+      if (upd) { const sel = document.querySelector(`[data-st="${q.id}"]`) || { value: q.status }; sel.value = t.status; await changeStatus(q, t.status, sel); }
+    };
+  }
+
+  const notifLabel = () => !('Notification' in window) ? 'No disponible en este navegador' : Notification.permission === 'granted' ? 'Activadas ✓' : Notification.permission === 'denied' ? 'Bloqueadas: actívalas en el candado de la barra' : 'Activar notificaciones';
+  function genTopic() { const a = new Uint32Array(3); crypto.getRandomValues(a); return 'draguz-' + [...a].map(n => n.toString(36)).join('').slice(0, 14); }
+
   function stockBadge(q) {
     if (q.stockUsed && q.stockUsed.length) return '<br><span class="tag">Lisas descontadas</span>';
     if (!['nueva', 'cotizada'].includes(q.status)) return '';
@@ -506,6 +550,10 @@ window.Admin = (function () {
       if (t.dataset.del) { const [c, id] = t.dataset.del.split(':'); if (!confirm('¿Borrar este elemento?')) return; try { await DB.remove(c, id); toast('Borrado'); await refresh(); } catch (er) { toast(DB.friendlyError(er), true); } return; }
       if (t.dataset.ticket) return showTicket(quotes.find(q => q.id === t.dataset.ticket));
       if (t.dataset.design) return openDesign(quotes.find(q => q.id === t.dataset.design));
+      if (t.dataset.wa) return openWaMenu(quotes.find(q => q.id === t.dataset.wa));
+      if (t.id === 'nt-perm') { if ('Notification' in window && Notification.permission === 'default') { await Notification.requestPermission(); t.textContent = notifLabel(); } return; }
+      if (t.id === 'nt-gen') { const i = $('#nt-topic'); if (!i.value || confirm('¿Generar un canal nuevo? Tendrás que volver a suscribirte en la app.')) i.value = genTopic(); return; }
+      if (t.id === 'nt-test') { const topic = $('#nt-topic').value.trim(); if (!topic) { toast('Primero genera un canal.', true); return; } const prev = S.settings.ntfyTopic; S.settings.ntfyTopic = topic; const ok = await notifyOwner({}, true); S.settings.ntfyTopic = prev; toast(ok ? 'Aviso de prueba enviado: revisa tu celular' : 'No se pudo enviar. Revisa tu conexión.', !ok); return; }
       if (t.id === 'lc-buy') return openBuy({});
       if (t.dataset.buy) return openBuy({ code: t.dataset.buy });
       if (t.dataset.hist) return openHistory(t.dataset.hist);
@@ -544,9 +592,11 @@ window.Admin = (function () {
     };
     root.onsubmit = async e => {
       if (e.target.id !== 'set-f') return; e.preventDefault(); const f = new FormData(e.target);
-      try { await DB.saveSettings(Object.assign({}, S.settings, { whatsapp: String(f.get('whatsapp') || '').replace(/\D/g, ''), anticipoPct: +f.get('anticipoPct') || 0, validityDays: +f.get('validityDays') || 7, loyaltyEvery: Math.max(2, parseInt(f.get('loyaltyEvery'), 10) || 8), loyaltyPct: Math.min(100, Math.max(0, +f.get('loyaltyPct') || 0)), loyaltyMin: Math.max(0, +f.get('loyaltyMin') || 0), rafflePrize: String(f.get('rafflePrize') || '').trim() })); toast('Ajustes guardados'); await refresh(); } catch (er) { toast(DB.friendlyError(er), true); }
+      try { await DB.saveSettings(Object.assign({}, S.settings, { whatsapp: String(f.get('whatsapp') || '').replace(/\D/g, ''), anticipoPct: +f.get('anticipoPct') || 0, validityDays: +f.get('validityDays') || 7, loyaltyEvery: Math.max(2, parseInt(f.get('loyaltyEvery'), 10) || 8), loyaltyPct: Math.min(100, Math.max(0, +f.get('loyaltyPct') || 0)), loyaltyMin: Math.max(0, +f.get('loyaltyMin') || 0), rafflePrize: String(f.get('rafflePrize') || '').trim(), ntfyTopic: String(f.get('ntfyTopic') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64), waTemplates: Object.fromEntries(WA_DEFAULT.map(t => [t.id, String(f.get('wa_' + t.id) || '').trim()]).filter(([id, v]) => v && v !== WA_DEFAULT.find(x => x.id === id).text)) })); toast('Ajustes guardados'); await refresh(); } catch (er) { toast(DB.friendlyError(er), true); }
     };
     paint();
   }
-  return { render };
+  // Cuando llega una cotización nueva, refresca la lista si la estás viendo
+  function onNewQuotes() { if ($('#adm-body') && !$('#view-admin').hidden && (tab === 'cotizaciones' || tab === 'resumen') && !document.querySelector('.modal')) paint(); }
+  return { render, onNewQuotes };
 })();
