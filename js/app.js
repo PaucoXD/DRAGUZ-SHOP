@@ -179,6 +179,7 @@
     }).join('') : '<div class="q-empty">Aún no agregas nada. Elige un producto a la izquierda.</div>';
     $('#q-totals').innerHTML = n ? `<div class="tot"><span>Total</span><b>${money(q.total)}</b></div>${q.anticipoPct ? `<div class="tot-sub"><span>Anticipo ${q.anticipoPct} %</span><span>${money(q.anticipo)}</span></div>` : ''}<div class="tot-sub"><span>Vigencia</span><span>${q.validityDays} días</span></div>` : '';
     ['q-send', 'q-wa', 'q-dl', 'q-clear'].forEach(id => { $('#' + id).disabled = !n; });
+    $('#qb-n').textContent = n === 1 ? '1 producto' : n + ' productos'; $('#qb-tot').textContent = money(q.total); S.qCount = n; updateQBar();
     $('#q-clear').hidden = !n;
     clearTimeout(tpt);
     if (!n) { $('#ticket-prev').hidden = true; return; }
@@ -348,6 +349,39 @@
     }
   }
 
+  /* ───── celular: menú, barra de cotización y tablas ───── */
+  const vis = { quoter: false, right: false };
+  function updateQBar() {
+    const bar = $('#q-bar'); if (!bar) return;
+    const show = vis.quoter && !vis.right && S.qCount > 0 && !$('#view-home').hidden;
+    bar.hidden = !show; document.body.classList.toggle('has-qbar', show);
+    document.body.classList.toggle('in-quoter', vis.quoter && !$('#view-home').hidden);
+  }
+  function setMenu(open) {
+    $('.hdr').classList.toggle('open', open); $('#btn-menu').setAttribute('aria-expanded', open);
+    $('#btn-menu').setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+  }
+  // En celular las tablas se muestran como tarjetas: cada celda toma el título de su columna
+  function labelTables() {
+    $$('table.tbl').forEach(t => {
+      const heads = $$('thead th', t).map(th => th.textContent.trim());
+      $$('tbody tr', t).forEach(tr => [...tr.children].forEach((td, i) => { if (!td.hasAttribute('data-label') && !td.hasAttribute('colspan')) td.setAttribute('data-label', heads[i] || ''); }));
+    });
+  }
+  function bindMobile() {
+    $('#btn-menu').onclick = e => { e.stopPropagation(); setMenu(!$('.hdr').classList.contains('open')); };
+    $('#main-nav').addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+    document.addEventListener('click', e => { if (!e.target.closest('.hdr')) setMenu(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+    window.addEventListener('hashchange', () => { setMenu(false); setTimeout(updateQBar, 60); });
+    $('#q-bar').onclick = () => $('#q-right').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(es => { es.forEach(e => { vis.quoter = e.isIntersecting; }); updateQBar(); }, { rootMargin: '-80px 0px -40% 0px' }).observe($('#cotizador'));
+      new IntersectionObserver(es => { es.forEach(e => { vis.right = e.isIntersecting; }); updateQBar(); }, { threshold: 0.12 }).observe($('#q-right'));
+    }
+    let raf; new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(labelTables); }).observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ───── render global ───── */
   function renderHome() {
     renderStock(); renderPromos(); renderQProducts(); renderConfig(); refreshSummary();
@@ -401,7 +435,7 @@
   async function boot() {
     $('#yr').textContent = new Date().getFullYear();
     if (DB.mode === 'demo') $('#demo-banner').hidden = false;
-    renderHero(); goSlide(0); bind();
+    renderHero(); goSlide(0); bind(); bindMobile();
     DB.onAuth((u, admin, pending) => {
       S.user = u; S.isAdmin = !!admin; S.adminPending = !!pending; $('#btn-admin').hidden = !admin; $('#acc-dot').hidden = !u;
       $('#btn-account').title = u ? u.email : 'Entrar';
