@@ -350,3 +350,98 @@ input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:var(--red)}
 .lc-help{margin-top:10px;max-width:640px;text-transform:none;letter-spacing:.02em}
 .stats:has(.stat:nth-child(3):last-child){grid-template-columns:repeat(3,1fr)}
 @media (max-width:760px){.stats:has(.stat:nth-child(3):last-child){grid-template-columns:1fr 1fr}}
+
+/* ═════════════ CELULAR ═════════════ */
+html{-webkit-tap-highlight-color:transparent}
+.menu-btn,.nav-m{display:none}
+.q-bar[hidden]{display:none}
+/* el botón de WhatsApp se oculta mientras se arma la cotización (ahí ya hay uno) */
+.in-quoter .wa-float{opacity:0;pointer-events:none;transform:scale(.6)}
+.wa-float{transition:transform .2s,opacity .2s}
+
+@media (max-width:900px){
+  /* encabezado de una sola fila + menú desplegable */
+  .hdr{grid-template-columns:1fr auto;padding:8px 12px 8px 16px;gap:4px}
+  .brand img{width:118px}
+  .menu-btn{display:grid}
+  .hdr .nav{position:absolute;left:0;right:0;top:100%;display:flex;flex-direction:column;gap:0;padding:6px 16px 14px;background:rgba(9,9,12,.98);border-bottom:1px solid var(--line);box-shadow:0 14px 30px rgba(0,0,0,.5);overflow:visible;
+    visibility:hidden;opacity:0;transform:translateY(-8px);transition:opacity .18s,transform .18s,visibility .18s}
+  .hdr.open .nav{visibility:visible;opacity:1;transform:none}
+  .hdr .nav a{display:block;padding:15px 4px;font-size:15px;border-bottom:1px solid var(--line)}
+  .hdr .nav a:last-child{border-bottom:0}
+  .hdr .nav .nav-m{display:block;color:var(--mute)}
+  .menu-btn path{transition:transform .2s,opacity .2s;transform-origin:12px 12px}
+  .hdr.open .menu-btn .l1{transform:translateY(5px) rotate(45deg)}
+  .hdr.open .menu-btn .l2{opacity:0}
+  .hdr.open .menu-btn .l3{transform:translateY(-5px) rotate(-45deg)}
+  .hdr-actions{gap:2px}
+  .hdr-actions .pill{padding:6px 10px;font-size:11px;letter-spacing:.1em}
+  .sec,.ftr{scroll-margin-top:64px}
+
+  /* admin: pestañas deslizables sin desbordar la página */
+  .adm > *{min-width:0}
+  .adm-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:8px;gap:6px;-webkit-overflow-scrolling:touch}
+  .adm-nav::-webkit-scrollbar{display:none}
+  .adm-nav button,.adm-nav a{flex:none;white-space:nowrap;padding:10px 14px}
+}
+
+@media (max-width:1100px){
+  /* barra fija con el total mientras se arma la cotización */
+  .q-bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:140;display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;background:var(--red);color:#fff;box-shadow:0 10px 28px rgba(0,0,0,.5);font:700 14px var(--sans);text-align:left;animation:pop .2s ease}
+  .qb-txt{flex:1}.qb-tot{font:900 18px var(--sans)}.qb-go{font:800 13px var(--sans);text-transform:uppercase;letter-spacing:.06em;padding-left:12px;border-left:1px solid rgba(255,255,255,.35)}
+  .has-qbar #toast{bottom:88px}
+}
+
+@media (max-width:760px){
+  /* tablas → tarjetas */
+  .tblwrap{overflow:visible;background:transparent;border:0}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl thead{display:none}
+  .tbl tr{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 14px;margin-bottom:10px}
+  .tbl tr:hover td{background:none}
+  .tbl td{padding:9px 0;border-bottom:1px solid #1d1d25;text-align:right;line-height:1.45;overflow-wrap:anywhere}
+  .tbl td::after{content:'';display:block;clear:both}
+  .tbl td:last-child{border-bottom:0}
+  .tbl td::before{content:attr(data-label);float:left;max-width:42%;margin-right:12px;padding-top:2px;text-align:left;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .tbl td[data-label=""]::before,.tbl td:not([data-label])::before{display:none}
+  .tbl td[data-label=""]{text-align:left}
+  .tbl td[colspan]{text-align:center}
+  .tbl td .st{display:inline-block;margin-top:4px}
+  .tbl .acts{justify-content:flex-start;width:100%}
+  .tbl td:has(.acts){padding-top:12px}
+  .tbl td:has(.acts)::before{display:none}
+  .tbl .acts .btn{flex:1 1 auto}
+  .tbl select{width:100%;max-width:220px}
+
+  .adm-h h2{font-size:22px}
+  .adm-h .acts,.adm-h > .btn{width:100%}
+  .adm-h .acts .btn{flex:1}
+  .stat{padding:16px}.stat b{font-size:30px}.stat span{font-size:10px;letter-spacing:.1em}
+  .lc-print select{min-width:0;width:100%}
+  .lc-print .btn{flex:1 1 auto}
+  .card-actions .btn{flex:1 1 100%}
+  .note{font-size:14px;padding:14px 16px}
+}
+
+@media (max-width:640px){
+  /* evita que iPhone haga zoom al escribir (necesita 16px) */
+  input,select,textarea,.tbl select{font-size:16px}
+  #demo-banner{font-size:10px;padding:6px 10px;letter-spacing:.02em}
+  .hero{height:clamp(420px,72vh,560px);min-height:0}
+  .tabs{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;gap:22px;margin:0 -16px 26px;padding:0 16px;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:none}
+  .ftr{margin-top:60px}
+  .ftr-bot{flex-direction:column;gap:6px;padding:18px 16px 90px;text-align:center}
+  .page-view{padding-top:32px}
+  /* ventanas como hoja inferior, con botón de cerrar visible */
+  .modal-bg{place-items:end stretch;padding:0}
+  .modal,.modal.wide{width:100%;max-height:92vh;border-radius:16px 16px 0 0;padding:52px 18px calc(22px + env(safe-area-inset-bottom));animation:sheet .22s ease}
+  .modal-x{position:sticky;top:0;float:right;margin:-40px -6px 0 0;width:40px;height:40px;background:#26262f;color:#fff;font-size:24px;z-index:2}
+  .pgal{gap:18px}
+  .f-actions{flex-direction:column-reverse}
+  .f-actions .btn{width:100%}
+  .q-actions .btn{width:100%}
+}
+@keyframes sheet{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@media (hover:none){.btn:hover{transform:none}}

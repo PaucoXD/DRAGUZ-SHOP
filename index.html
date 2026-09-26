@@ -26,11 +26,13 @@
 <div id="demo-banner" hidden>MODO DEMO · sin Firebase configurado, los datos viven solo en este navegador · Admin demo: <b>admin@draguz.demo</b> (cualquier contraseña)</div>
 
 <header class="hdr" id="top">
-  <nav class="nav" aria-label="Principal">
+  <nav class="nav" id="main-nav" aria-label="Principal">
     <a href="#/stock">Stock</a>
     <a href="#/personaliza">Personaliza</a>
     <a href="#/cotizador">Cotizador</a>
     <a href="#/contacto">Contacto</a>
+    <a class="nav-m" href="#/tarjeta">Mi tarjeta</a>
+    <a class="nav-m" href="#/cuenta">Mi cuenta</a>
   </nav>
   <a class="brand" href="#/" aria-label="Draguz Shop, inicio"><img src="assets/img/logo.png" alt="Draguz Shop"></a>
   <div class="hdr-actions">
@@ -43,6 +45,9 @@
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
       <span id="quote-count" class="count">0</span>
     </a>
+    <button id="btn-menu" class="icon-btn menu-btn" aria-label="Abrir menú" aria-expanded="false" aria-controls="main-nav">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path class="l1" d="M4 7h16"/><path class="l2" d="M4 12h16"/><path class="l3" d="M4 17h16"/></svg>
+    </button>
   </div>
 </header>
 
@@ -126,6 +131,8 @@
 <a id="wa-float" class="wa-float" href="#" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="Escríbenos por WhatsApp" hidden>
   <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M16 3C8.8 3 3 8.7 3 15.8c0 2.5.7 4.9 2 7L3 29l6.4-2c2 1.1 4.3 1.7 6.6 1.7 7.2 0 13-5.7 13-12.8S23.2 3 16 3zm0 23.4c-2.1 0-4.1-.6-5.9-1.7l-.4-.3-3.8 1.2 1.2-3.7-.3-.4c-1.2-1.8-1.9-3.9-1.9-6 0-5.9 4.9-10.6 11-10.6s11 4.8 11 10.6-4.9 10.9-10.9 10.9zm6-7.9c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6.1-.2.1-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 .8.3 1.4.5 1.9.7.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>
 </a>
+
+<button id="q-bar" class="q-bar" hidden><span class="qb-txt"><b id="qb-n">0</b> en tu cotización</span><span class="qb-tot" id="qb-tot">$0</span><span class="qb-go">Ver ›</span></button>
 
 <div id="modal-root"></div>
 <div id="toast" role="status" aria-live="polite"></div>
