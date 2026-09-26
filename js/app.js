@@ -250,6 +250,7 @@
     const h = location.hash.replace(/^#\/?/, '');
     if (h === 'cuenta') { show('account'); renderAccount(); window.scrollTo(0, 0); }
     else if (h === 'admin') {
+      if (!S.isAdmin && S.adminPending) { show('home'); return; }
       if (!S.isAdmin) { show('home'); if (S.user) toast('Tu cuenta no tiene permisos de administrador.', true); else openAuth('login'); return; }
       show('admin'); window.Admin.render(); window.scrollTo(0, 0);
     } else {
@@ -307,8 +308,8 @@
     $('#yr').textContent = new Date().getFullYear();
     if (DB.mode === 'demo') $('#demo-banner').hidden = false;
     renderHero(); goSlide(0); bind();
-    DB.onAuth((u, admin) => {
-      S.user = u; S.isAdmin = !!admin; $('#btn-admin').hidden = !admin; $('#acc-dot').hidden = !u;
+    DB.onAuth((u, admin, pending) => {
+      S.user = u; S.isAdmin = !!admin; S.adminPending = !!pending; $('#btn-admin').hidden = !admin; $('#acc-dot').hidden = !u;
       $('#btn-account').title = u ? u.email : 'Entrar';
       if (window.__booted) route();
     });

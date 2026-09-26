@@ -5,7 +5,7 @@ window.DB = (function () {
   const clone = o => JSON.parse(JSON.stringify(o));
   const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
   const listeners = [];
-  const notify = (u, a) => listeners.forEach(f => f(u, a));
+  const notify = (u, a, pending) => listeners.forEach(f => f(u, a, !!pending));
   const COLS = ['catalog', 'extras', 'stock', 'quotes'];
 
   const api = { mode: live ? 'firebase' : 'demo', onAuth(f) { listeners.push(f); } };
@@ -76,10 +76,19 @@ window.DB = (function () {
         await new Promise(resolve => {
           let first = true;
           auth.onAuthStateChanged(async u => {
-            let admin = false;
-            if (u) { try { admin = (await fs.doc('admins/' + u.uid).get()).exists; } catch (e) { admin = false; } }
-            notify(u ? { uid: u.uid, email: u.email, name: u.displayName || (u.email || '').split('@')[0] } : null, admin);
+            const user = u ? { uid: u.uid, email: u.email, name: u.displayName || (u.email || '').split('@')[0] } : null;
+            // Mostrar la sesión de inmediato; la revisión de admin llega después
+            notify(user, false, !!u);
             if (first) { first = false; resolve(); }
+            if (!u) return;
+            try {
+              const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+              const admin = (await Promise.race([fs.doc('admins/' + u.uid).get(), timeout])).exists;
+              if (auth.currentUser && auth.currentUser.uid === u.uid) notify(user, admin);
+            } catch (e) {
+              console.warn('No se pudo verificar si eres admin:', e);
+              if (auth.currentUser && auth.currentUser.uid === u.uid) notify(user, false);
+            }
           });
         });
       })();
