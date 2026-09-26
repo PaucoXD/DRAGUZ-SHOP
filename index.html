@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cotizador — Draguz Shop</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-mark">DRAGUZ<span>.</span>SHOP</span>
+    <span class="brand-sub">COTIZADOR</span>
+  </div>
+  <nav><a href="admin.html">Panel admin →</a></nav>
+</div>
+
+<div class="layout">
+
+  <section class="panel">
+    <h1>Cotización rápida</h1>
+    <p class="lead">Elige producto, talla, color y cantidad — el precio se calcula solo.</p>
+
+    <div class="field">
+      <label for="cliente">Cliente (opcional)</label>
+      <input type="text" id="cliente" placeholder="Nombre del cliente" autocomplete="off" />
+    </div>
+
+    <div class="field">
+      <label for="producto">Producto</label>
+      <select id="producto"></select>
+    </div>
+
+    <div class="field">
+      <label>Talla</label>
+      <div class="swatches" id="tallaWrap"></div>
+    </div>
+
+    <div class="field">
+      <label>Color</label>
+      <div class="swatches" id="colorWrap"></div>
+    </div>
+
+    <div class="field">
+      <label for="cantidad">Cantidad</label>
+      <div class="qty-row">
+        <button type="button" id="qtyMinus">−</button>
+        <input type="number" id="cantidad" min="1" value="1" />
+        <button type="button" id="qtyPlus">+</button>
+      </div>
+      <div class="tier-note" id="tierNote">Selecciona un producto para ver precios por volumen.</div>
+    </div>
+
+    <div class="actions">
+      <button class="ghost" id="btnNuevo" type="button">Nueva cotización</button>
+    </div>
+  </section>
+
+  <section class="ticket-wrap">
+    <div id="ticket">
+      <div class="ticket-head">
+        <div class="mark">DRAGUZ<span>.</span>SHOP</div>
+        <div class="meta">COTIZACIÓN DE PRODUCTO PERSONALIZADO</div>
+      </div>
+      <div class="empty-hint" id="emptyHint">Elige producto, talla y color para generar la cotización.</div>
+      <div id="ticketBody" style="display:none;"></div>
+    </div>
+
+    <div class="ticket-export-actions">
+      <button class="primary" id="btnDescargar" disabled>Descargar ticket (PNG)</button>
+      <button class="ghost" id="btnCopiar" disabled>Copiar texto</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
