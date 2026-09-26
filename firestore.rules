@@ -55,6 +55,18 @@ service cloud.firestore {
     }
 
     // Compras registradas, sorteos e inventario de prendas lisas: solo el admin
+    // Seguimiento público por folio: datos mínimos (sin nombre ni teléfono).
+    // El cliente lo crea al enviar su solicitud; solo el admin lo actualiza.
+    match /tracking/{folio} {
+      allow get: if true;
+      allow list, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        request.resource.data.keys().hasOnly(['folio', 'status', 'total', 'anticipo', 'items', 'createdAt', 'updatedAt']) &&
+        request.resource.data.folio == folio && request.resource.data.status == 'nueva' &&
+        request.resource.data.total is number && request.resource.data.items is list && request.resource.data.items.size() <= 50
+      );
+    }
+
     match /purchases/{id} { allow read, write: if isAdmin(); }
     match /raffles/{id}   { allow read, write: if isAdmin(); }
     match /blanks/{id}    { allow read, write: if isAdmin(); }
