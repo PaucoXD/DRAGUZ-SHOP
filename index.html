@@ -1,83 +1,122 @@
-<!DOCTYPE html>
-<html lang="es-MX">
+<!doctype html>
+<html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cotizador — Draguz Shop</title>
-<link rel="stylesheet" href="css/style.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Draguz Shop — Define your different</title>
+<meta name="description" content="Playeras, hoodies, gorras y más personalizados en DTF. Cotiza en línea y revisa lo que tenemos en stock.">
+<meta name="theme-color" content="#09090C">
+<link rel="icon" href="assets/img/favicon.png">
+<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<div id="demo-banner" hidden>MODO DEMO · sin Firebase configurado, los datos viven solo en este navegador · Admin demo: <b>admin@draguz.demo</b> (cualquier contraseña)</div>
 
-<div class="topbar">
-  <div class="brand">
-    <span class="brand-mark">DRAGUZ<span>.</span>SHOP</span>
-    <span class="brand-sub">COTIZADOR</span>
+<header class="hdr" id="top">
+  <nav class="nav" aria-label="Principal">
+    <a href="#/stock">Stock</a>
+    <a href="#/personaliza">Personaliza</a>
+    <a href="#/cotizador">Cotizador</a>
+    <a href="#/contacto">Contacto</a>
+  </nav>
+  <a class="brand" href="#/" aria-label="Draguz Shop, inicio"><img src="assets/img/logo.png" alt="Draguz Shop"></a>
+  <div class="hdr-actions">
+    <a id="btn-admin" class="pill" href="#/admin" hidden>Admin</a>
+    <button id="btn-account" class="icon-btn" aria-label="Mi cuenta" title="Mi cuenta">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4-6.5 8-6.5s7 2 8 6.5"/></svg>
+      <span id="acc-dot" class="dot" hidden></span>
+    </button>
+    <a id="btn-quote" class="icon-btn" href="#/cotizador" aria-label="Mi cotización" title="Mi cotización">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+      <span id="quote-count" class="count">0</span>
+    </a>
   </div>
-  <nav><a href="admin.html">Panel admin →</a></nav>
-</div>
+</header>
 
-<div class="layout">
+<main>
+  <div id="view-home">
+    <section class="hero" id="hero" aria-label="Destacados"></section>
 
-  <section class="panel">
-    <h1>Cotización rápida</h1>
-    <p class="lead">Elige producto, talla, color y cantidad — el precio se calcula solo.</p>
-
-    <div class="field">
-      <label for="cliente">Cliente (opcional)</label>
-      <input type="text" id="cliente" placeholder="Nombre del cliente" autocomplete="off" />
-    </div>
-
-    <div class="field">
-      <label for="producto">Producto</label>
-      <select id="producto"></select>
-    </div>
-
-    <div class="field">
-      <label>Talla</label>
-      <div class="swatches" id="tallaWrap"></div>
-    </div>
-
-    <div class="field">
-      <label>Color</label>
-      <div class="swatches" id="colorWrap"></div>
-    </div>
-
-    <div class="field">
-      <label for="cantidad">Cantidad</label>
-      <div class="qty-row">
-        <button type="button" id="qtyMinus">−</button>
-        <input type="number" id="cantidad" min="1" value="1" />
-        <button type="button" id="qtyPlus">+</button>
+    <section class="sec" id="stock">
+      <div class="wrap">
+        <div class="sec-head"><span class="kicker"><i class="slash"></i>[ 01 ] En stock</span><h2>Listo para llevar</h2><p class="sub">Piezas disponibles ahora. Aparta la tuya por WhatsApp.</p></div>
+        <div class="tabs" id="stock-tabs"></div>
+        <div class="grid4" id="stock-grid"></div>
       </div>
-      <div class="tier-note" id="tierNote">Selecciona un producto para ver precios por volumen.</div>
-    </div>
+    </section>
 
-    <div class="actions">
-      <button class="ghost" id="btnNuevo" type="button">Nueva cotización</button>
-    </div>
-  </section>
-
-  <section class="ticket-wrap">
-    <div id="ticket">
-      <div class="ticket-head">
-        <div class="mark">DRAGUZ<span>.</span>SHOP</div>
-        <div class="meta">COTIZACIÓN DE PRODUCTO PERSONALIZADO</div>
+    <section class="sec" id="personaliza">
+      <div class="wrap">
+        <div class="sec-head"><span class="kicker"><i class="slash"></i>[ 02 ] Personaliza</span><h2>Hazlo a tu manera</h2><p class="sub">DTF, UV y vinil. Elige qué quieres personalizar y cotiza al instante.</p></div>
+        <div class="promos" id="promos"></div>
       </div>
-      <div class="empty-hint" id="emptyHint">Elige producto, talla y color para generar la cotización.</div>
-      <div id="ticketBody" style="display:none;"></div>
-    </div>
+    </section>
 
-    <div class="ticket-export-actions">
-      <button class="primary" id="btnDescargar" disabled>Descargar ticket (PNG)</button>
-      <button class="ghost" id="btnCopiar" disabled>Copiar texto</button>
-    </div>
-  </section>
+    <section class="sec alt" id="cotizador">
+      <div class="wrap">
+        <div class="sec-head"><span class="kicker"><i class="slash"></i>[ 03 ] Cotizador</span><h2>Arma tu cotización</h2><p class="sub">Elige producto, colores y tallas. El precio de menudeo o mayoreo se calcula solo, y te llevas tu ticket.</p></div>
+        <div class="quoter">
+          <div class="q-left">
+            <div class="q-step"><h3><b>1</b> Elige el producto</h3><div class="q-products" id="q-products"></div></div>
+            <div class="q-step" id="q-config" hidden></div>
+          </div>
+          <aside class="q-right" id="q-right">
+            <h3>Tu cotización</h3>
+            <div id="q-lines" class="q-lines"></div>
+            <div id="q-totals"></div>
+            <div class="q-cust">
+              <input id="q-name" type="text" placeholder="Tu nombre" autocomplete="name">
+              <input id="q-phone" type="tel" placeholder="Tu WhatsApp (opcional)" autocomplete="tel">
+              <textarea id="q-notes" rows="2" placeholder="Notas generales del pedido (fecha límite, diseño, etc.)"></textarea>
+            </div>
+            <div class="q-actions">
+              <button class="btn" id="q-send">Enviar solicitud</button>
+              <button class="btn ghost" id="q-wa">Enviar por WhatsApp</button>
+              <button class="btn ghost" id="q-dl">Descargar ticket (PNG)</button>
+              <button class="link" id="q-clear">Vaciar cotización</button>
+            </div>
+            <div class="ticket-prev" id="ticket-prev" hidden><span class="tag">Vista previa del ticket</span><canvas id="ticket-canvas"></canvas></div>
+          </aside>
+        </div>
+      </div>
+    </section>
 
-</div>
+    <section class="sec" id="proceso">
+      <div class="wrap">
+        <div class="sec-head"><span class="kicker"><i class="slash"></i>[ 04 ] Proceso</span><h2>Así de simple</h2></div>
+        <div class="steps">
+          <div><b>01</b><h4>Cotiza</h4><p>Elige tus productos y descarga tu ticket en segundos.</p></div>
+          <div><b>02</b><h4>Confirma</h4><p>Envía tu solicitud o escríbenos por WhatsApp y afinamos detalles y diseño.</p></div>
+          <div><b>03</b><h4>Anticipo y producción</h4><p>Con tu anticipo arrancamos: impresión precisa y acabado premium.</p></div>
+          <div><b>04</b><h4>Entrega</h4><p>Tu pedido llega empacado como se merece.</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
 
-<div class="toast" id="toast"></div>
+  <div id="view-account" class="wrap page-view" hidden></div>
+  <div id="view-admin" class="wrap-wide page-view" hidden></div>
+</main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script type="module" src="js/app.js"></script>
+<footer class="ftr" id="contacto">
+  <div class="wrap ftr-in">
+    <div><img class="ftr-logo" src="assets/img/logo.png" alt="Draguz Shop"><p class="tagline">Define your different</p></div>
+    <div><h5>Navega</h5><a href="#/stock">Stock</a><a href="#/personaliza">Personaliza</a><a href="#/cotizador">Cotizador</a><a href="#/cuenta">Mi cuenta</a></div>
+    <div><h5>Contacto</h5><a id="ft-wa" href="#" target="_blank" rel="noopener">WhatsApp</a><a id="ft-fb" href="#" target="_blank" rel="noopener" hidden>Facebook</a></div>
+  </div>
+  <div class="wrap ftr-bot"><span>© <span id="yr"></span> Draguz Shop</span><span>DTF · UV · VINIL</span></div>
+</footer>
+
+<div id="modal-root"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/config.js"></script>
+<script src="js/logo-data.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/store.js"></script>
+<script src="js/pricing.js"></script>
+<script src="js/app.js"></script>
+<script src="js/admin.js"></script>
+<script>DZ.boot();</script>
 </body>
 </html>

@@ -1,90 +1,41 @@
-# Cotizador Draguz Shop
+# Draguz Shop — sitio web
 
-Herramienta web para generar cotizaciones rápidas (imagen tipo ticket) a partir
-de un catálogo editable desde un panel admin conectado a Firebase.
+Sitio estático (HTML + CSS + JS, sin compilar) para publicar en **GitHub Pages**, con **Firebase** (Authentication + Firestore) como base de datos.
 
-- `index.html` — el cotizador (lo usas tú, y después se puede enlazar desde tu página de venta)
-- `admin.html` — panel para editar el catálogo (protegido con login)
-- No requiere build ni npm — son archivos estáticos, listos para GitHub Pages.
+## Qué incluye
+- **Tienda "En stock"**: productos que tú subes desde el panel (fotos, precio, tallas, piezas).
+- **Personaliza + Cotizador**: el cliente elige producto, color, tallas y extras; el precio de **menudeo/mayoreo** se calcula solo. Genera un **ticket en imagen (PNG)**, lo manda por **WhatsApp** o lo envía como **solicitud** a tu panel (requiere cuenta).
+- **Cuentas de usuario**: correo/contraseña o Google. Cada usuario ve su historial de cotizaciones.
+- **Panel Admin** (`#/admin`): stock, catálogo personalizable (precios, tallas, colores), extras/estampados, cotizaciones (con estado), ajustes (WhatsApp, anticipo, vigencia) e importar/exportar JSON.
 
-## 0. Modo local (funciona sin configurar nada)
+## 0. Probarlo ya (modo demo)
+Abre `index.html` con doble clic. Mientras `js/config.js` no tenga `apiKey`, corre en **modo demo** con datos de ejemplo guardados en tu navegador.
+Admin demo: entra con `admin@draguz.demo` (cualquier contraseña) → aparece el botón **Admin**.
 
-Mientras `js/firebase-config.js` tenga los valores de ejemplo (`TU_API_KEY`…),
-la app arranca en **modo local**: trae dos productos de ejemplo, el panel admin
-no pide login y el catálogo se guarda en el navegador (localStorage). Sirve
-para usarlo ya mismo, pero cada navegador/dispositivo tiene su propio catálogo.
-En cuanto pegues tu configuración real de Firebase, cambia solo a la nube.
+## 1. Crear el proyecto Firebase (plan gratuito Spark)
+1. En https://console.firebase.google.com crea un proyecto.
+2. **Authentication → Método de acceso**: activa *Correo/contraseña* y *Google*.
+3. **Firestore Database → Crear base de datos** (modo producción, región cercana).
+4. Pestaña **Reglas** de Firestore: pega el contenido de `firestore.rules` y publica.
+5. **Configuración del proyecto → Tus apps → Web (`</>`)**: registra la app y copia el objeto `firebaseConfig` dentro de `js/config.js`.
+   (La `apiKey` de Firebase web es pública por diseño; lo que protege tus datos son las reglas.)
 
-## 1. Crear el proyecto en Firebase
+## 2. Crear tu usuario administrador
+1. Publica el sitio (paso 3) o ábrelo en local, y **crea tu cuenta** normal (Crear cuenta).
+2. En Firebase → Authentication → Usuarios, copia tu **UID**.
+3. En Firestore crea la colección `admins` y un documento cuyo **ID sea tu UID** (con cualquier campo, p. ej. `rol: "admin"`).
+4. Recarga el sitio: aparece el botón **Admin** en el encabezado.
+5. En **Admin → Ajustes**: guarda tu WhatsApp y pulsa **Cargar datos de ejemplo** si quieres partir del catálogo de muestra (los precios son de ejemplo; edítalos).
 
-1. Ve a https://console.firebase.google.com → **Crear proyecto**.
-2. Dentro del proyecto, click en el ícono `</>` para agregar una **Web App**.
-   Copia el objeto `firebaseConfig` que te muestra.
-3. Pega esos valores en `js/firebase-config.js`.
+## 3. Publicar en GitHub Pages
+1. Crea un repositorio y sube **todo el contenido de esta carpeta** (incluye `.nojekyll`).
+2. Repositorio → **Settings → Pages** → *Deploy from a branch* → `main` / `(root)`.
+3. Tu sitio queda en `https://TU-USUARIO.github.io/TU-REPO/`.
+4. Firebase → Authentication → Configuración → **Dominios autorizados**: agrega `TU-USUARIO.github.io` (necesario para Google y el login).
 
-## 2. Activar Firestore
-
-1. En el menú lateral → **Firestore Database** → **Crear base de datos**
-   (modo producción, la región más cercana, ej. `us-central1`).
-2. Ve a la pestaña **Reglas** y pega esto (permite leer el catálogo a
-   cualquiera, pero solo tú —autenticado— puedes escribir):
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /productos/{productoId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-  }
-}
-```
-
-3. Publica las reglas.
-
-## 3. Activar Authentication (para el panel admin)
-
-1. Menú lateral → **Authentication** → **Sign-in method** → activa
-   **Correo/contraseña**.
-2. Pestaña **Users** → **Add user** → crea tu usuario (el correo y
-   contraseña con los que vas a entrar a `admin.html`).
-
-## 4. Cargar tu primer producto
-
-1. Abre `admin.html` en el navegador (local o ya publicado), inicia
-   sesión con el usuario que creaste.
-2. Click en **+ Agregar producto** y llena:
-   - Nombre (ej. "Playera DTF")
-   - Precio menudeo / mayoreo
-   - Cantidad mínima para mayoreo (déjalo vacío si no aplica)
-   - Tallas y colores, separados por comas
-3. Guarda. Ya aparece disponible en el cotizador (`index.html`).
-
-## 5. Publicar en GitHub Pages
-
-1. Crea un repositorio nuevo (o usa uno existente) y sube esta carpeta.
-2. En el repo: **Settings → Pages → Branch: main → carpeta `/root`** → Save.
-3. En unos minutos tu cotizador queda en
-   `https://tu-usuario.github.io/tu-repo/`.
-
-⚠️ Nota: la `apiKey` de Firebase queda visible en el código del navegador —
-esto es normal y esperado en apps web de Firebase; la seguridad real la dan
-las **reglas de Firestore** (paso 2) y el login de Authentication (paso 3),
-no el ocultar la apiKey.
-
-## Cómo funciona el precio
-
-- Si la cantidad seleccionada es **menor** al umbral de mayoreo del
-  producto → se cobra el precio de menudeo.
-- Si es **igual o mayor** → se cobra el precio de mayoreo automáticamente,
-  y el ticket lo marca como "PRECIO MAYOREO".
-- Si un producto no tiene umbral de mayoreo, siempre usa el precio de
-  menudeo.
-
-## Próximos pasos sugeridos
-
-- Cuando quieras enlazarlo desde tu página de venta, basta con poner un
-  link o botón a `index.html` (o incrustarlo en un iframe).
-- Si luego quieres que el cliente mismo lo use públicamente, se puede
-  agregar validaciones extra y quitar el link visible al panel admin.
+## Notas
+- **Fotos**: se comprimen en el navegador (≈700 px) y se guardan dentro del documento en Firestore para no requerir Firebase Storage (que hoy pide plan de pago). Recomendado: máx. 3 fotos por producto. Si el catálogo crece mucho, conviene migrar a Storage o Cloudinary.
+- **Precios**: `Catálogo personalizable` (menudeo, mayoreo, piezas mínimas de mayoreo, recargo por talla) y `Extras` (por pieza o cargo único).
+- **Cambiar textos del inicio / banners**: `js/app.js` (`SLIDES`, `renderPromos`) e `index.html`.
+- **Colores y tipografías**: variables al inicio de `css/styles.css` (siguen el manual de identidad: rojo #E3000F, morado #2A1B3D, índigo #2C275F, Montserrat).
+- Si cambias el logo, reemplaza `assets/img/logo.png` y regenera `js/logo-data.js` (versión base64 usada para el ticket).
