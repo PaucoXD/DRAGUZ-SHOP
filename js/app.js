@@ -200,12 +200,20 @@
     return `Hola Draguz Shop, quiero cotizar:\n${L}\nTotal: ${money(q.total)}\nFolio: ${q.folio}${q.customer.name ? '\nNombre: ' + q.customer.name : ''}${q.customer.notes ? '\nNotas: ' + q.customer.notes : ''}`;
   }
   async function sendRequest() {
-    if (!S.user) { openAuth('login', sendRequest); toast('Inicia sesión para enviar tu solicitud.'); return; }
     const q = snap(); if (!q.lines.length) return;
+    // Sin cuenta: basta con nombre y WhatsApp para poder contactarlo
+    if (!S.user) {
+      const name = (q.customer.name || '').trim(), phone = (q.customer.phone || '').replace(/\D/g, '');
+      if (!name) { toast('Escribe tu nombre para enviar la solicitud.', true); $('#q-name').focus(); return; }
+      if (phone.length < 10) { toast('Escribe tu WhatsApp (10 dígitos) para que te contactemos.', true); $('#q-phone').focus(); return; }
+    }
     const btn = $('#q-send'); btn.disabled = true;
     try {
-      await DB.save('quotes', Object.assign({}, q, { uid: S.user.uid, email: S.user.email, name: q.customer.name || S.user.name, status: 'nueva', createdAt: Date.now() }));
-      toast('¡Solicitud enviada! ' + q.folio); S.quote = { lines: [], customer: S.quote.customer }; persist(); refreshSummary();
+      const who = S.user
+        ? { uid: S.user.uid, email: S.user.email, name: q.customer.name || S.user.name }
+        : { uid: null, guest: true, email: '', name: q.customer.name.trim(), customer: Object.assign({}, q.customer, { name: q.customer.name.trim(), phone: q.customer.phone.replace(/\D/g, '') }) };
+      await DB.save('quotes', Object.assign({}, q, who, { status: 'nueva', createdAt: Date.now() }));
+      toast('¡Solicitud enviada! ' + q.folio + (S.user ? '' : ' · Te contactaremos por WhatsApp')); S.quote = { lines: [], customer: S.quote.customer }; persist(); refreshSummary();
     } catch (e) { toast(DB.friendlyError(e), true); } finally { btn.disabled = false; }
   }
 
@@ -213,7 +221,7 @@
   function openAuth(mode, after) {
     let m = mode || 'login';
     const draw = () => {
-      const el = openModal(`<h3 class="m-title">${m === 'login' ? 'Entrar' : 'Crear cuenta'}</h3><p class="m-sub">${m === 'login' ? 'Accede para enviar cotizaciones y ver tu historial.' : 'Guarda tus cotizaciones y síguelas desde tu cuenta.'}</p>
+      const el = openModal(`<h3 class="m-title">${m === 'login' ? 'Entrar' : 'Crear cuenta'}</h3><p class="m-sub">${m === 'login' ? 'Accede para guardar tus cotizaciones y ver tu historial.' : 'Guarda tus cotizaciones y síguelas desde tu cuenta.'}</p>
       <div class="mtabs"><button data-m="login" class="${m === 'login' ? 'on' : ''}">Entrar</button><button data-m="signup" class="${m === 'signup' ? 'on' : ''}">Crear cuenta</button></div>
       <form class="fcol" id="auth-f">${m === 'signup' ? '<input name="name" placeholder="Tu nombre" autocomplete="name" required>' : ''}<input name="email" type="email" placeholder="Correo" autocomplete="email" required><input name="pw" type="password" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="${m === 'login' ? 'current-password' : 'new-password'}" minlength="6" ${DB.mode === 'demo' ? '' : 'required'}><div class="err" id="auth-err"></div><button class="btn">${m === 'login' ? 'Entrar' : 'Crear cuenta'}</button></form>
       <div class="sep">o</div><button class="btn ghost" id="g-btn" style="width:100%">Continuar con Google</button>`);
@@ -245,11 +253,12 @@
 
   /* ───── RUTAS ───── */
   const SECTIONS = ['stock', 'personaliza', 'cotizador', 'proceso', 'contacto'];
-  function show(name) { ['home', 'account', 'admin'].forEach(n => { $('#view-' + n).hidden = n !== name; }); }
+  function show(name) { ['home', 'account', 'admin'].forEach(n => { $('#view-' + n).hidden = n !== name; }); document.body.classList.toggle('in-admin', name === 'admin'); }
   function route() {
     const h = location.hash.replace(/^#\/?/, '');
     if (h === 'cuenta') { show('account'); renderAccount(); window.scrollTo(0, 0); }
     else if (h === 'admin') {
+      if (!S.isAdmin && S.adminPending) { show('home'); return; }
       if (!S.isAdmin) { show('home'); if (S.user) toast('Tu cuenta no tiene permisos de administrador.', true); else openAuth('login'); return; }
       show('admin'); window.Admin.render(); window.scrollTo(0, 0);
     } else {
@@ -264,6 +273,8 @@
     renderStock(); renderPromos(); renderQProducts(); renderConfig(); refreshSummary();
     const wa = (S.settings.whatsapp || CFG.whatsapp || '').replace(/\D/g, '');
     $('#ft-wa').href = wa ? 'https://wa.me/' + wa : '#'; $('#ft-wa').hidden = !wa;
+    $('#wa-float').href = wa ? 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hola Draguz Shop, quiero información.') : '#';
+    $('#wa-float').hidden = !wa;
     if (CFG.facebook) { $('#ft-fb').href = CFG.facebook; $('#ft-fb').hidden = false; }
     $('#q-name').value = S.quote.customer.name || ''; $('#q-phone').value = S.quote.customer.phone || ''; $('#q-notes').value = S.quote.customer.notes || '';
   }
@@ -307,8 +318,8 @@
     $('#yr').textContent = new Date().getFullYear();
     if (DB.mode === 'demo') $('#demo-banner').hidden = false;
     renderHero(); goSlide(0); bind();
-    DB.onAuth((u, admin) => {
-      S.user = u; S.isAdmin = !!admin; $('#btn-admin').hidden = !admin; $('#acc-dot').hidden = !u;
+    DB.onAuth((u, admin, pending) => {
+      S.user = u; S.isAdmin = !!admin; S.adminPending = !!pending; $('#btn-admin').hidden = !admin; $('#acc-dot').hidden = !u;
       $('#btn-account').title = u ? u.email : 'Entrar';
       if (window.__booted) route();
     });

@@ -7,6 +7,19 @@
 <meta name="description" content="Playeras, hoodies, gorras y más personalizados en DTF. Cotiza en línea y revisa lo que tenemos en stock.">
 <meta name="theme-color" content="#09090C">
 <link rel="icon" href="assets/img/favicon.png">
+<link rel="canonical" href="https://paucoxd.github.io/DRAGUZ-SHOP/">
+<!-- Vista previa al compartir el link (WhatsApp, Facebook, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Draguz Shop">
+<meta property="og:locale" content="es_MX">
+<meta property="og:title" content="Draguz Shop — Define your different">
+<meta property="og:description" content="Playeras, hoodies, gorras y más personalizados en DTF. Cotiza en línea y revisa lo que tenemos en stock.">
+<meta property="og:url" content="https://paucoxd.github.io/DRAGUZ-SHOP/">
+<meta property="og:image" content="https://paucoxd.github.io/DRAGUZ-SHOP/assets/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gorra negra con el logo de Draguz Shop">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -65,8 +78,8 @@
             <div id="q-lines" class="q-lines"></div>
             <div id="q-totals"></div>
             <div class="q-cust">
-              <input id="q-name" type="text" placeholder="Tu nombre" autocomplete="name">
-              <input id="q-phone" type="tel" placeholder="Tu WhatsApp (opcional)" autocomplete="tel">
+              <input id="q-name" type="text" placeholder="Tu nombre" autocomplete="name" maxlength="80">
+              <input id="q-phone" type="tel" placeholder="Tu WhatsApp (10 dígitos)" autocomplete="tel" maxlength="20">
               <textarea id="q-notes" rows="2" placeholder="Notas generales del pedido (fecha límite, diseño, etc.)"></textarea>
             </div>
             <div class="q-actions">
@@ -106,6 +119,10 @@
   </div>
   <div class="wrap ftr-bot"><span>© <span id="yr"></span> Draguz Shop</span><span>DTF · UV · VINIL</span></div>
 </footer>
+
+<a id="wa-float" class="wa-float" href="#" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="Escríbenos por WhatsApp" hidden>
+  <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M16 3C8.8 3 3 8.7 3 15.8c0 2.5.7 4.9 2 7L3 29l6.4-2c2 1.1 4.3 1.7 6.6 1.7 7.2 0 13-5.7 13-12.8S23.2 3 16 3zm0 23.4c-2.1 0-4.1-.6-5.9-1.7l-.4-.3-3.8 1.2 1.2-3.7-.3-.4c-1.2-1.8-1.9-3.9-1.9-6 0-5.9 4.9-10.6 11-10.6s11 4.8 11 10.6-4.9 10.9-10.9 10.9zm6-7.9c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6.1-.2.1-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5 .8.3 1.4.5 1.9.7.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>
+</a>
 
 <div id="modal-root"></div>
 <div id="toast" role="status" aria-live="polite"></div>

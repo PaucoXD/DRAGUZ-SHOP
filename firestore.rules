@@ -20,9 +20,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Cotizaciones: el usuario crea y lee las suyas; el admin lee y gestiona todas
+    // Cotizaciones: el usuario crea y lee las suyas; el admin lee y gestiona todas.
+    // Sin cuenta también se puede enviar una solicitud (con nombre y WhatsApp), pero no leerla.
+    function isGuestQuote(d) {
+      return d.uid == null && d.guest == true && d.status == 'nueva' &&
+             d.customer.name is string && d.customer.name.size() > 0 && d.customer.name.size() <= 80 &&
+             d.customer.phone is string && d.customer.phone.size() >= 10 && d.customer.phone.size() <= 20 &&
+             d.lines is list && d.lines.size() > 0 && d.lines.size() <= 50;
+    }
     match /quotes/{id} {
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow create: if (request.auth != null && request.resource.data.uid == request.auth.uid) ||
+                       isGuestQuote(request.resource.data);
       allow read:   if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
       allow update, delete: if isAdmin();
     }
