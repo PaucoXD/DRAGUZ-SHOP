@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Panel admin — Draguz Shop</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-mark">DRAGUZ<span>.</span>SHOP</span>
+    <span class="brand-sub">PANEL ADMIN</span>
+  </div>
+  <nav><a href="index.html">← Cotizador</a></nav>
+</div>
+
+<div id="loginBox" class="login-box">
+  <h1>Iniciar sesión</h1>
+  <form id="loginForm">
+    <div class="field">
+      <label for="loginEmail">Correo</label>
+      <input type="email" id="loginEmail" required autocomplete="username" />
+    </div>
+    <div class="field">
+      <label for="loginPass">Contraseña</label>
+      <input type="password" id="loginPass" required autocomplete="current-password" />
+    </div>
+    <p id="loginError" style="color:#EC008C; font-size:0.75rem; min-height: 1em;"></p>
+    <button class="primary" type="submit" style="width:100%;">Entrar</button>
+  </form>
+</div>
+
+<div id="adminShell" class="admin-shell" style="display:none;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;">
+    <h1 style="font-family:'Archivo Black',sans-serif; font-size:1.2rem; margin:0;">Catálogo de productos</h1>
+    <button class="ghost" id="btnLogout" type="button">Cerrar sesión</button>
+  </div>
+
+  <button class="primary" id="btnNuevoProducto" type="button" style="width:100%; margin-bottom:22px;">+ Agregar producto</button>
+
+  <div id="listaProductos"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
