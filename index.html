@@ -81,6 +81,8 @@
               <input id="q-name" type="text" placeholder="Tu nombre" autocomplete="name" maxlength="80">
               <input id="q-phone" type="tel" placeholder="Tu WhatsApp (10 dígitos)" autocomplete="tel" maxlength="20">
               <textarea id="q-notes" rows="2" placeholder="Notas generales del pedido (fecha límite, diseño, etc.)"></textarea>
+              <input id="q-card" type="text" placeholder="Código de tu tarjeta (opcional) · DZ-0000-XXX" autocomplete="off" maxlength="16" style="text-transform:uppercase">
+              <small id="q-card-hint" class="q-card-hint"></small>
             </div>
             <div class="q-actions">
               <button class="btn" id="q-send">Enviar solicitud</button>
@@ -108,13 +110,14 @@
   </div>
 
   <div id="view-account" class="wrap page-view" hidden></div>
+  <div id="view-card" class="wrap page-view" hidden></div>
   <div id="view-admin" class="wrap-wide page-view" hidden></div>
 </main>
 
 <footer class="ftr" id="contacto">
   <div class="wrap ftr-in">
     <div><img class="ftr-logo" src="assets/img/logo.png" alt="Draguz Shop"><p class="tagline">Define your different</p></div>
-    <div><h5>Navega</h5><a href="#/stock">Stock</a><a href="#/personaliza">Personaliza</a><a href="#/cotizador">Cotizador</a><a href="#/cuenta">Mi cuenta</a></div>
+    <div><h5>Navega</h5><a href="#/stock">Stock</a><a href="#/personaliza">Personaliza</a><a href="#/cotizador">Cotizador</a><a href="#/tarjeta">Mi tarjeta</a><a href="#/cuenta">Mi cuenta</a></div>
     <div><h5>Contacto</h5><a id="ft-wa" href="#" target="_blank" rel="noopener">WhatsApp</a><a id="ft-fb" href="#" target="_blank" rel="noopener" hidden>Facebook</a></div>
   </div>
   <div class="wrap ftr-bot"><span>© <span id="yr"></span> Draguz Shop</span><span>DTF · UV · VINIL</span></div>
@@ -132,6 +135,7 @@
 <script src="js/seed.js"></script>
 <script src="js/store.js"></script>
 <script src="js/pricing.js"></script>
+<script src="js/loyalty.js"></script>
 <script src="js/app.js"></script>
 <script src="js/admin.js"></script>
 <script>DZ.boot();</script>

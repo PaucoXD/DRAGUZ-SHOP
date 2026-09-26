@@ -34,5 +34,26 @@ service cloud.firestore {
       allow read:   if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
       allow update, delete: if isAdmin();
     }
+
+    // Tarjetas de cliente: el código impreso funciona como llave.
+    // Cualquiera puede consultar UNA tarjeta por su código, pero no listarlas.
+    // Una tarjeta libre la puede activar su dueño una sola vez (solo nombre y WhatsApp).
+    match /cards/{code} {
+      allow get: if true;
+      allow list, create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        resource.data.status == 'libre' &&
+        request.resource.data.status == 'activa' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'name', 'phone', 'activatedAt']) &&
+        request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80 &&
+        request.resource.data.phone is string && request.resource.data.phone.size() >= 10 && request.resource.data.phone.size() <= 20 &&
+        request.resource.data.activatedAt is number
+      );
+    }
+
+    // Compras registradas, sorteos e inventario de prendas lisas: solo el admin
+    match /purchases/{id} { allow read, write: if isAdmin(); }
+    match /raffles/{id}   { allow read, write: if isAdmin(); }
+    match /blanks/{id}    { allow read, write: if isAdmin(); }
   }
 }

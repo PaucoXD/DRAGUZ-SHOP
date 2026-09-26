@@ -1,7 +1,7 @@
 /* Draguz Shop — app principal */
 (function () {
   'use strict';
-  const DB = window.DB, CFG = window.DRAGUZ_CONFIG || {}, P = window.Pricing;
+  const DB = window.DB, CFG = window.DRAGUZ_CONFIG || {}, P = window.Pricing, L = window.Loyalty;
   const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
   const money = P.money;
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -128,7 +128,7 @@
   }
   function startDraft(pid) {
     const p = S.catalog.find(x => x.id === pid); if (!p) return;
-    S.draft = { productId: pid, color: (p.colors && p.colors[0] && p.colors[0].name) || '', sizes: {}, qty: 0, extraIds: [], notes: '' };
+    S.draft = { productId: pid, color: (p.colors && p.colors[0] && p.colors[0].name) || '', cut: (p.cuts && p.cuts[0]) || '', sizes: {}, qty: 0, extraIds: [], notes: '' };
     renderQProducts(); renderConfig();
   }
   function draftCalc() { const p = S.catalog.find(x => x.id === S.draft.productId); return { p, c: P.calcLine(S.draft, p, S.extras) }; }
@@ -141,6 +141,7 @@
     box.innerHTML = `<div class="cfg-head"><h3><b>2</b> Configura: ${esc(p.name)}</h3><button class="link" data-act="cancel">Cambiar</button></div>
       ${p.description ? `<p class="hint" style="margin:0">${esc(p.description)}</p>` : ''}
       ${(p.colors || []).length ? `<div class="cfg-block"><span class="lbl">Color</span><div class="swatches">${p.colors.map(c => `<button class="sw ${c.name === d.color ? 'on' : ''}" data-color="${esc(c.name)}" title="${esc(c.name)}" style="--c:${esc(c.hex)}" aria-label="${esc(c.name)}"></button>`).join('')}<span class="hint">${esc(d.color)}</span></div></div>` : ''}
+      ${(p.cuts || []).length ? `<div class="cfg-block"><span class="lbl">Corte</span><div class="cut-chips">${p.cuts.map(c => `<button type="button" class="${c === d.cut ? 'on' : ''}" data-cut="${esc(c)}">${esc(c)}</button>`).join('')}</div></div>` : ''}
       <div class="cfg-block"><span class="lbl">${hasSizes ? 'Cantidad por talla' : 'Cantidad'}</span>
       ${hasSizes ? `<div class="sizes">${p.sizes.map(s => `<label class="size"><span>${esc(s)}</span>${(p.sizeExtra || {})[s] ? `<i>+${money(p.sizeExtra[s])}</i>` : ''}<input type="number" min="0" inputmode="numeric" data-size="${esc(s)}" value="${d.sizes[s] || ''}" placeholder="0"></label>`).join('')}</div>`
         : `<input type="number" min="0" inputmode="numeric" id="qty-input" value="${d.qty || ''}" placeholder="0" style="max-width:160px">`}</div>
@@ -163,7 +164,7 @@
     const { p, c } = draftCalc();
     if (c.qty <= 0) { toast('Agrega al menos una pieza.', true); return; }
     const d = S.draft;
-    S.quote.lines.push({ lid: Math.random().toString(36).slice(2, 9), productId: d.productId, color: d.color, sizes: Object.fromEntries(Object.entries(d.sizes).filter(([, n]) => +n > 0)), qty: (p.sizes || []).length ? 0 : d.qty, extraIds: d.extraIds.slice(), notes: d.notes });
+    S.quote.lines.push({ lid: Math.random().toString(36).slice(2, 9), productId: d.productId, color: d.color, cut: d.cut || '', sizes: Object.fromEntries(Object.entries(d.sizes).filter(([, n]) => +n > 0)), qty: (p.sizes || []).length ? 0 : d.qty, extraIds: d.extraIds.slice(), notes: d.notes });
     persist(); S.draft = null; renderQProducts(); renderConfig(); refreshSummary();
     toast('Agregado a tu cotización'); $('#q-right').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -174,7 +175,7 @@
     const cnt = $('#quote-count'); cnt.textContent = n; cnt.dataset.n = n;
     $('#q-lines').innerHTML = n ? q.lines.map(l => {
       const sz = Object.entries(l.sizes).filter(([, v]) => +v > 0).map(([k, v]) => `${k}×${v}`).join(' ');
-      return `<div class="ql"><button class="rm" data-rm="${l.lid}" aria-label="Quitar">×</button><b>${esc(l.name)}</b><small>${[l.color, sz].filter(Boolean).map(esc).join(' · ')}<br>${l.qty} pzas · ${l.tier} ${money(l.unit)} c/u${l.extras.length ? '<br>+ ' + l.extras.map(e => esc(e.name)).join(', ') : ''}</small><div class="sub"><span></span><span>${money(l.subtotal)}</span></div></div>`;
+      return `<div class="ql"><button class="rm" data-rm="${l.lid}" aria-label="Quitar">×</button><b>${esc(l.name)}</b><small>${[l.cut, l.color, sz].filter(Boolean).map(esc).join(' · ')}<br>${l.qty} pzas · ${l.tier} ${money(l.unit)} c/u${l.extras.length ? '<br>+ ' + l.extras.map(e => esc(e.name)).join(', ') : ''}</small><div class="sub"><span></span><span>${money(l.subtotal)}</span></div></div>`;
     }).join('') : '<div class="q-empty">Aún no agregas nada. Elige un producto a la izquierda.</div>';
     $('#q-totals').innerHTML = n ? `<div class="tot"><span>Total</span><b>${money(q.total)}</b></div>${q.anticipoPct ? `<div class="tot-sub"><span>Anticipo ${q.anticipoPct} %</span><span>${money(q.anticipo)}</span></div>` : ''}<div class="tot-sub"><span>Vigencia</span><span>${q.validityDays} días</span></div>` : '';
     ['q-send', 'q-wa', 'q-dl', 'q-clear'].forEach(id => { $('#' + id).disabled = !n; });
@@ -196,8 +197,8 @@
     $('#mt-dl', m).onclick = () => downloadTicket(q);
   }
   function waText(q) {
-    const L = q.lines.map(l => { const sz = Object.entries(l.sizes).filter(([, v]) => +v > 0).map(([k, v]) => `${k}×${v}`).join(' '); return `• ${l.name}${l.color ? ' (' + l.color + ')' : ''} — ${l.qty} pzas${sz ? ' [' + sz + ']' : ''} = ${money(l.subtotal)}`; }).join('\n');
-    return `Hola Draguz Shop, quiero cotizar:\n${L}\nTotal: ${money(q.total)}\nFolio: ${q.folio}${q.customer.name ? '\nNombre: ' + q.customer.name : ''}${q.customer.notes ? '\nNotas: ' + q.customer.notes : ''}`;
+    const L = q.lines.map(l => { const sz = Object.entries(l.sizes).filter(([, v]) => +v > 0).map(([k, v]) => `${k}×${v}`).join(' '); return `• ${l.name}${l.cut ? ' ' + l.cut : ''}${l.color ? ' (' + l.color + ')' : ''} — ${l.qty} pzas${sz ? ' [' + sz + ']' : ''} = ${money(l.subtotal)}`; }).join('\n');
+    return `Hola Draguz Shop, quiero cotizar:\n${L}\nTotal: ${money(q.total)}\nFolio: ${q.folio}${q.customer.name ? '\nNombre: ' + q.customer.name : ''}${q.customer.notes ? '\nNotas: ' + q.customer.notes : ''}${L.normCode(S.quote.cardCode) ? '\nTarjeta: ' + L.normCode(S.quote.cardCode) : ''}`;
   }
   async function sendRequest() {
     const q = snap(); if (!q.lines.length) return;
@@ -212,8 +213,8 @@
       const who = S.user
         ? { uid: S.user.uid, email: S.user.email, name: q.customer.name || S.user.name }
         : { uid: null, guest: true, email: '', name: q.customer.name.trim(), customer: Object.assign({}, q.customer, { name: q.customer.name.trim(), phone: q.customer.phone.replace(/\D/g, '') }) };
-      await DB.save('quotes', Object.assign({}, q, who, { status: 'nueva', createdAt: Date.now() }));
-      toast('¡Solicitud enviada! ' + q.folio + (S.user ? '' : ' · Te contactaremos por WhatsApp')); S.quote = { lines: [], customer: S.quote.customer }; persist(); refreshSummary();
+      await DB.save('quotes', Object.assign({}, q, who, { cardCode: L.normCode(S.quote.cardCode), status: 'nueva', createdAt: Date.now() }));
+      toast('¡Solicitud enviada! ' + q.folio + (S.user ? '' : ' · Te contactaremos por WhatsApp')); S.quote = { lines: [], customer: S.quote.customer, cardCode: S.quote.cardCode }; persist(); refreshSummary();
     } catch (e) { toast(DB.friendlyError(e), true); } finally { btn.disabled = false; }
   }
 
@@ -251,12 +252,91 @@
     } catch (e) { $('#acc-list').innerHTML = '<div class="q-empty" style="border:0">' + esc(DB.friendlyError(e)) + '</div>'; }
   }
 
+  /* ───── TARJETA DE CLIENTE ───── */
+  function rememberCard(code) {
+    try { localStorage.setItem('dz_card', code); } catch (e) { }
+    S.quote.cardCode = code; persist();
+    const i = $('#q-card'); if (i && i.value !== code) { i.value = code; checkCard(); }
+  }
+  const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
+  async function renderCard(raw) {
+    const v = $('#view-card'), code = L.normCode(raw);
+    const head = '<span class="kicker"><i class="slash"></i>Tarjeta de cliente</span>';
+    if (!code) {
+      v.innerHTML = `${head}<h1>Mi tarjeta</h1><p class="sub muted">Escribe el código que viene en tu tarjeta Draguz, o escanea su QR con la cámara.</p>
+        <form id="card-find" class="card-find"><input name="code" placeholder="DZ-0000-XXX" required maxlength="16" autocomplete="off" value="${esc(raw || '')}"><button class="btn">Ver mi tarjeta</button></form>
+        ${raw ? '<p class="err">Ese código no es válido. Revisa que esté completo, por ejemplo DZ-0147-K7Q.</p>' : ''}`;
+      $('#card-find').onsubmit = e => { e.preventDefault(); const t = String(new FormData(e.target).get('code') || '').trim(); location.hash = '#/tarjeta/' + (L.normCode(t) || encodeURIComponent(t)); };
+      return;
+    }
+    v.innerHTML = `${head}<h1>Mi tarjeta</h1><div class="q-empty">Cargando…</div>`;
+    let card;
+    try { card = await DB.get('cards', code); } catch (e) { v.innerHTML = `${head}<h1>Mi tarjeta</h1><p class="err">${esc(DB.friendlyError(e))}</p>`; return; }
+    if (!card) { v.innerHTML = `${head}<h1>Mi tarjeta</h1><p class="err">No encontramos la tarjeta <b>${esc(code)}</b>. Revisa el código.</p><a class="btn ghost" href="#/tarjeta">Probar otro código</a>`; return; }
+    const st = L.status(card, S.settings);
+    const perks = `<ul class="perks">${st.pct ? `<li><b>${st.every}ª compra:</b> ${st.pct}% de descuento, y el ciclo vuelve a empezar.</li>` : ''}<li><b>1ª compra:</b> participas en el sorteo del mes${st.prize ? ' (' + esc(st.prize) + ')' : ''}.</li>${st.min ? `<li>Cuentan las compras desde ${money(st.min)}.</li>` : ''}</ul>`;
+
+    if (card.status !== 'activa') {
+      v.innerHTML = `${head}<h1>Activa tu tarjeta</h1><p class="sub muted">Tarjeta <b>${esc(code)}</b>. Regístrala una sola vez para empezar a acumular tus compras.</p>
+        <div class="card-cols"><form id="card-reg" class="fcol card-reg"><input name="name" placeholder="Tu nombre" required maxlength="80" autocomplete="name"><input name="phone" type="tel" placeholder="Tu WhatsApp (10 dígitos)" required maxlength="20" autocomplete="tel"><div class="err" id="card-err"></div><button class="btn">Activar mi tarjeta</button></form>
+        <div class="card-perks"><h3 class="lbl">Beneficios</h3>${perks}</div></div>`;
+      $('#card-reg').onsubmit = async e => {
+        e.preventDefault(); const f = new FormData(e.target), btn = $('.btn', e.target);
+        const name = String(f.get('name') || '').trim(), phone = String(f.get('phone') || '').replace(/\D/g, '');
+        if (phone.length < 10) { $('#card-err').textContent = 'Escribe tu WhatsApp completo (10 dígitos).'; return; }
+        btn.disabled = true;
+        try {
+          await DB.save('cards', Object.assign({}, card, { status: 'activa', name, phone, activatedAt: Date.now() }));
+          rememberCard(code); toast('¡Tarjeta activada!'); renderCard(code);
+        } catch (er) { $('#card-err').textContent = DB.friendlyError(er); btn.disabled = false; }
+      };
+      return;
+    }
+
+    rememberCard(code);
+    const stamps = Array.from({ length: st.every }, (_, i) => {
+      const n = i + 1, gift = n === st.every && st.pct;
+      return `<span class="stamp ${n <= st.filled ? 'on' : ''} ${gift ? 'gift' : ''}">${gift ? st.pct + '%' : n}</span>`;
+    }).join('');
+    const msg = !st.pct ? `Llevas <b>${st.done}</b> compras registradas.`
+      : st.nextHasDiscount ? `<b>¡Tu próxima compra tiene ${st.pct}% de descuento!</b>`
+      : `Llevas <b>${st.filled}</b> de ${st.every}. Te ${st.left === 1 ? 'falta <b>1</b> compra' : `faltan <b>${st.left}</b> compras`} y la siguiente tiene <b>${st.pct}% de descuento</b>.`;
+    const raffle = st.nextIsFirst ? `Con tu primera compra participas en el sorteo del mes${st.prize ? ': <b>' + esc(st.prize) + '</b>' : ''}.`
+      : card.firstPurchaseAt ? `Participaste en el sorteo de <b>${L.monthName(L.monthKey(card.firstPurchaseAt))}</b>.` : '';
+    v.innerHTML = `${head}<div class="lcard"><div class="lc-top"><img src="assets/img/logo.png" alt="Draguz Shop"><span class="lc-code">${esc(code)}</span></div>
+      <h2>Hola, ${esc(firstName(card.name))}</h2><div class="stamps">${stamps}</div><p class="lc-msg">${msg}</p>${raffle ? `<p class="lc-raffle">🎟️ ${raffle}</p>` : ''}</div>
+      <div class="card-actions"><a class="btn" href="#/cotizador">Cotizar con mi tarjeta</a><button class="btn ghost" id="card-wa">Escribir por WhatsApp</button></div>
+      <div class="card-perks"><h3 class="lbl">Cómo funciona</h3>${perks}<p class="tag" style="text-transform:none;letter-spacing:.02em">Tus compras se registran cuando recibes tu pedido. Guarda esta página o tu tarjeta física.</p></div>`;
+    $('#card-wa').onclick = () => openWA(`Hola Draguz Shop, tengo la tarjeta ${code}.`);
+  }
+
+  let ckt;
+  function checkCard() {
+    const inp = $('#q-card'), hint = $('#q-card-hint'); if (!inp) return;
+    clearTimeout(ckt);
+    const raw = inp.value.trim(), code = L.normCode(raw);
+    hint.className = 'q-card-hint';
+    if (!raw) { hint.textContent = ''; return; }
+    if (!code) { hint.textContent = 'Código incompleto (ej. DZ-0147-K7Q).'; return; }
+    hint.textContent = 'Buscando tarjeta…';
+    ckt = setTimeout(async () => {
+      let card = null; try { card = await DB.get('cards', code); } catch (e) { }
+      if (L.normCode(inp.value) !== code) return;
+      if (!card) { hint.textContent = 'No encontramos esa tarjeta.'; hint.classList.add('bad'); return; }
+      if (card.status !== 'activa') { hint.innerHTML = `Tarjeta sin activar. <a href="#/tarjeta/${code}">Actívala aquí</a>.`; return; }
+      const st = L.status(card, S.settings);
+      hint.classList.add('ok');
+      hint.innerHTML = `✓ Tarjeta de ${esc(firstName(card.name))} · ` + (st.nextHasDiscount ? `<b>esta compra lleva ${st.pct}% de descuento</b>` : st.pct ? `sería tu compra ${st.filled + 1} de ${st.every}` : `${st.done} compras registradas`);
+    }, 350);
+  }
+
   /* ───── RUTAS ───── */
   const SECTIONS = ['stock', 'personaliza', 'cotizador', 'proceso', 'contacto'];
-  function show(name) { ['home', 'account', 'admin'].forEach(n => { $('#view-' + n).hidden = n !== name; }); document.body.classList.toggle('in-admin', name === 'admin'); }
+  function show(name) { ['home', 'account', 'admin', 'card'].forEach(n => { $('#view-' + n).hidden = n !== name; }); document.body.classList.toggle('in-admin', name === 'admin'); }
   function route() {
     const h = location.hash.replace(/^#\/?/, '');
     if (h === 'cuenta') { show('account'); renderAccount(); window.scrollTo(0, 0); }
+    else if (h === 'tarjeta' || h.startsWith('tarjeta/')) { show('card'); renderCard(decodeURIComponent(h.slice(8))); window.scrollTo(0, 0); }
     else if (h === 'admin') {
       if (!S.isAdmin && S.adminPending) { show('home'); return; }
       if (!S.isAdmin) { show('home'); if (S.user) toast('Tu cuenta no tiene permisos de administrador.', true); else openAuth('login'); return; }
@@ -277,6 +357,8 @@
     $('#wa-float').hidden = !wa;
     if (CFG.facebook) { $('#ft-fb').href = CFG.facebook; $('#ft-fb').hidden = false; }
     $('#q-name').value = S.quote.customer.name || ''; $('#q-phone').value = S.quote.customer.phone || ''; $('#q-notes').value = S.quote.customer.notes || '';
+    if (!S.quote.cardCode) { try { S.quote.cardCode = localStorage.getItem('dz_card') || ''; } catch (e) { } }
+    $('#q-card').value = S.quote.cardCode || ''; checkCard();
   }
 
   function bind() {
@@ -292,6 +374,7 @@
     const cfg = $('#q-config');
     cfg.addEventListener('click', e => {
       const c = e.target.closest('[data-color]'); if (c) { S.draft.color = c.dataset.color; renderConfig(); return; }
+      const ct = e.target.closest('[data-cut]'); if (ct) { S.draft.cut = ct.dataset.cut; renderConfig(); return; }
       const a = e.target.closest('[data-act]'); if (!a) return;
       if (a.dataset.act === 'cancel') { S.draft = null; renderQProducts(); renderConfig(); } else if (a.dataset.act === 'add') addLine();
     });
@@ -306,6 +389,7 @@
     $('#q-lines').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { S.quote.lines = S.quote.lines.filter(l => l.lid !== b.dataset.rm); persist(); refreshSummary(); } });
     const cust = () => { S.quote.customer = { name: $('#q-name').value, phone: $('#q-phone').value, notes: $('#q-notes').value }; persist(); refreshSummary(); };
     ['q-name', 'q-phone', 'q-notes'].forEach(id => $('#' + id).addEventListener('input', cust));
+    $('#q-card').addEventListener('input', () => { S.quote.cardCode = $('#q-card').value.trim().toUpperCase(); persist(); checkCard(); });
     $('#q-dl').onclick = () => downloadTicket();
     $('#q-wa').onclick = () => openWA(waText(snap()));
     $('#q-send').onclick = sendRequest;
