@@ -51,3 +51,13 @@ Admin demo: entra con `admin@draguz.demo` (cualquier contraseña) → aparece el
 - Al pasar una cotización a **En proceso** se descuentan solas, **solo si alcanzan todas**; si se cancela, regresan. En la lista de cotizaciones verás **✔ Hay lisas / ✖ Faltan lisas**.
 
 > Tras actualizar el sitio, vuelve a copiar `firestore.rules` a Firebase → Firestore → Reglas → Publicar.
+
+## Galería, opiniones y preguntas frecuentes
+- **Admin → Galería, opiniones y FAQ.** Las opiniones y preguntas de ejemplo se muestran mientras no guardes las tuyas; pulsa **Guardarlas para poder editarlas**.
+- Opiniones: escribe la conversación con una línea por mensaje (`C:` cliente, `D:` Draguz) y usa solo iniciales. No publiques capturas con teléfonos, fotos de perfil o datos de pago.
+- La sección **Trabajos reales** aparece en cuanto subes la primera foto.
+
+## Vista previa del diseño
+En el cotizador, el cliente pulsa **Ver cómo queda con tu diseño**, sube su logo y lo acomoda sobre la prenda del color elegido. La vista previa y el diseño (PNG reducido) viajan con la solicitud; en **Admin → Cotizaciones** aparece el botón **🎨 Diseño** para verlos y descargarlos.
+
+> Al cambiar CSS o JS, sube el número `?v=` en `index.html` para que los navegadores descarguen la versión nueva.

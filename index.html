@@ -20,7 +20,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Gorra negra con el logo de Draguz Shop">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="css/styles.css?v=20260926b">
+<link rel="stylesheet" href="css/styles.css?v=20260926c">
 </head>
 <body>
 <div class="storm" aria-hidden="true" style="position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none"><div class="storm-clouds"></div><div class="storm-fog"></div><div class="storm-fog f2"></div><canvas id="storm" style="position:absolute;inset:0;width:100%;height:100%"></canvas></div>
@@ -32,6 +32,8 @@
     <a href="#/personaliza">Personaliza</a>
     <a href="#/cotizador">Cotizador</a>
     <a href="#/contacto">Contacto</a>
+    <a class="nav-m" href="#/opiniones">Opiniones</a>
+    <a class="nav-m" href="#/faq">Preguntas frecuentes</a>
     <a class="nav-m" href="#/tarjeta">Mi tarjeta</a>
     <a class="nav-m" href="#/cuenta">Mi cuenta</a>
   </nav>
@@ -113,6 +115,28 @@
         </div>
       </div>
     </section>
+
+    <section class="sec" id="trabajos" hidden>
+      <div class="wrap">
+        <div class="sec-head"><span class="kicker"><i class="slash"></i>Trabajos reales</span><h2>Hecho por Draguz</h2><p class="sub">Algunos pedidos que ya entregamos.</p></div>
+        <div class="gallery" id="gallery-grid"></div>
+      </div>
+    </section>
+
+    <section class="sec alt" id="opiniones">
+      <div class="wrap">
+        <div class="sec-head"><span class="kicker"><i class="slash"></i>[ 05 ] Opiniones</span><h2>Lo que dicen nuestros clientes</h2><p class="sub">Conversaciones reales. Por privacidad solo mostramos iniciales.</p></div>
+        <div class="ops" id="op-grid"></div>
+      </div>
+    </section>
+
+    <section class="sec" id="faq">
+      <div class="wrap">
+        <div class="sec-head"><span class="kicker"><i class="slash"></i>[ 06 ] Preguntas</span><h2>Preguntas frecuentes</h2></div>
+        <div class="faqs" id="faq-list"></div>
+        <p class="faq-more">¿Otra duda? <button class="link" id="faq-wa">Escríbenos por WhatsApp</button></p>
+      </div>
+    </section>
   </div>
 
   <div id="view-account" class="wrap page-view" hidden></div>
@@ -123,7 +147,7 @@
 <footer class="ftr" id="contacto">
   <div class="wrap ftr-in">
     <div><img class="ftr-logo" src="assets/img/logo.png" alt="Draguz Shop"><p class="tagline">Define your different</p></div>
-    <div><h5>Navega</h5><a href="#/stock">Stock</a><a href="#/personaliza">Personaliza</a><a href="#/cotizador">Cotizador</a><a href="#/tarjeta">Mi tarjeta</a><a href="#/cuenta">Mi cuenta</a></div>
+    <div><h5>Navega</h5><a href="#/stock">Stock</a><a href="#/personaliza">Personaliza</a><a href="#/cotizador">Cotizador</a><a href="#/opiniones">Opiniones</a><a href="#/faq">Preguntas frecuentes</a><a href="#/tarjeta">Mi tarjeta</a><a href="#/cuenta">Mi cuenta</a></div>
     <div><h5>Contacto</h5><a id="ft-wa" href="#" target="_blank" rel="noopener">WhatsApp</a><a id="ft-fb" href="#" target="_blank" rel="noopener" hidden>Facebook</a></div>
   </div>
   <div class="wrap ftr-bot"><span>© <span id="yr"></span> Draguz Shop</span><span>DTF · UV · VINIL</span></div>
@@ -138,15 +162,16 @@
 <div id="modal-root"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/storm.js?v=20260926b"></script>
-<script src="js/config.js?v=20260926b"></script>
-<script src="js/logo-data.js?v=20260926b"></script>
-<script src="js/seed.js?v=20260926b"></script>
-<script src="js/store.js?v=20260926b"></script>
-<script src="js/pricing.js?v=20260926b"></script>
-<script src="js/loyalty.js?v=20260926b"></script>
-<script src="js/app.js?v=20260926b"></script>
-<script src="js/admin.js?v=20260926b"></script>
+<script src="js/storm.js?v=20260926c"></script>
+<script src="js/config.js?v=20260926c"></script>
+<script src="js/logo-data.js?v=20260926c"></script>
+<script src="js/seed.js?v=20260926c"></script>
+<script src="js/store.js?v=20260926c"></script>
+<script src="js/pricing.js?v=20260926c"></script>
+<script src="js/loyalty.js?v=20260926c"></script>
+<script src="js/mockup.js?v=20260926c"></script>
+<script src="js/app.js?v=20260926c"></script>
+<script src="js/admin.js?v=20260926c"></script>
 <script>DZ.boot();</script>
 </body>
 </html>

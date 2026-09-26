@@ -6,7 +6,7 @@ window.DB = (function () {
   const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
   const listeners = [];
   const notify = (u, a, pending) => listeners.forEach(f => f(u, a, !!pending));
-  const COLS = ['catalog', 'extras', 'stock', 'quotes'];
+  const COLS = ['catalog', 'extras', 'stock', 'quotes', 'testimonials', 'faqs', 'gallery'];
 
   const api = { mode: live ? 'firebase' : 'demo', onAuth(f) { listeners.push(f); } };
 
@@ -54,7 +54,7 @@ window.DB = (function () {
       async remove(col, id) { set(col, (get(col) || []).filter(x => x.id !== id)); },
       async getSettings() { return Object.assign({}, clone(window.SEED.settings), get('settings') || {}); },
       async saveSettings(s) { set('settings', s); },
-      async seed() { ['catalog', 'extras', 'stock'].forEach(c => set(c, clone(window.SEED[c]))); },
+      async seed(cols) { (cols || ['catalog', 'extras', 'stock']).forEach(c => set(c, clone(window.SEED[c]))); },
       async reset() { Object.keys(localStorage).filter(k => k.startsWith('dz_')).forEach(k => localStorage.removeItem(k)); }
     });
     return api;
@@ -121,8 +121,8 @@ window.DB = (function () {
       return Object.assign({}, clone(window.SEED.settings), s);
     },
     async saveSettings(s) { const d = strip(s); delete d.id; await fs.doc('settings/main').set(d); },
-    async seed() {
-      for (const c of ['catalog', 'extras', 'stock']) for (const it of window.SEED[c]) await api.save(c, it);
+    async seed(cols) {
+      for (const c of (cols || ['catalog', 'extras', 'stock'])) for (const it of window.SEED[c]) await api.save(c, it);
     },
     async reset() { }
   });

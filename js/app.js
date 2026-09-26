@@ -10,7 +10,10 @@
     catalog: [], extras: [], stock: [], settings: {}, user: null, isAdmin: false, cat: 'Todo', draft: null,
     quote: (function () { try { return JSON.parse(localStorage.getItem('dz_quote')) || null; } catch (e) { return null; } })() || { lines: [], customer: { name: '', phone: '', notes: '' } }
   };
-  const persist = () => localStorage.setItem('dz_quote', JSON.stringify(S.quote));
+  const persist = () => {
+    try { localStorage.setItem('dz_quote', JSON.stringify(S.quote)); }
+    catch (e) { try { localStorage.setItem('dz_quote', JSON.stringify(Object.assign({}, S.quote, { designs: {}, lines: S.quote.lines.map(l => Object.assign({}, l, { mockup: '' })) }))); } catch (e2) { } }
+  };
 
   /* ───── utilidades UI ───── */
   let tt;
@@ -47,8 +50,13 @@
   /* ───── datos ───── */
   const byOrder = (a, b) => (a.order || 999) - (b.order || 999) || String(a.name).localeCompare(b.name);
   async function loadAll() {
-    const [c, e, s, st] = await Promise.all([DB.list('catalog'), DB.list('extras'), DB.list('stock'), DB.getSettings()]);
+    const soft = col => DB.list(col).catch(() => null);
+    const [c, e, s, st, t, f, g] = await Promise.all([DB.list('catalog'), DB.list('extras'), DB.list('stock'), DB.getSettings(), soft('testimonials'), soft('faqs'), soft('gallery')]);
     S.catalog = c.sort(byOrder); S.extras = e.sort(byOrder); S.stock = s.sort(byOrder); S.settings = st;
+    // Opiniones y preguntas: mientras no cargues las tuyas, se muestran las de ejemplo
+    S.testimonials = (t && t.length ? t : window.SEED.testimonials).slice().sort(byOrder); S.testimonialsSeeded = !(t && t.length);
+    S.faqs = (f && f.length ? f : window.SEED.faqs).slice().sort(byOrder); S.faqsSeeded = !(f && f.length);
+    S.gallery = (g || []).slice().sort((a, b) => (a.order || 999) - (b.order || 999) || (b.createdAt || 0) - (a.createdAt || 0));
   }
   async function reload() { await loadAll(); renderHome(); }
   const imgOf = p => (p.images && p.images[0]) || window.ph(p.kind || 'tee', (p.colors && p.colors[0] && p.colors[0].hex) || '#1a1a1f');
@@ -121,6 +129,38 @@
       + `<a class="promo solid" href="#/cotizador"><div><span class="kicker" style="color:#fff">Precio por volumen</span><div class="big">Mayoreo</div><p style="margin:10px 0 16px;color:#cfcfe0">Más piezas, mejor precio unitario.</p><span class="btn sm">Ver precios</span></div></a>`;
   }
 
+  /* ───── TRABAJOS, OPINIONES Y PREGUNTAS ───── */
+  const active = a => (a || []).filter(x => x.active !== false);
+  function renderGallery() {
+    const items = active(S.gallery).filter(g => g.images && g.images[0]);
+    $('#trabajos').hidden = !items.length;
+    $('#gallery-grid').innerHTML = items.map(g => `<button class="gal" data-gal="${esc(g.id)}"><img loading="lazy" src="${g.images[0]}" alt="${esc(g.caption || 'Trabajo de Draguz Shop')}">${g.caption ? `<span>${esc(g.caption)}</span>` : ''}</button>`).join('');
+  }
+  function openGallery(id) {
+    const g = S.gallery.find(x => x.id === id); if (!g) return;
+    const m = openModal(`<div class="gal-view"><img id="gv-main" src="${g.images[0]}" alt="${esc(g.caption || '')}">${g.images.length > 1 ? '<div class="thumbs">' + g.images.map((s, i) => `<button class="${i ? '' : 'on'}" data-i="${i}"><img src="${s}" alt=""></button>`).join('') + '</div>' : ''}${g.caption ? `<h3 class="m-title" style="margin-top:14px">${esc(g.caption)}</h3>` : ''}${g.category ? `<span class="tag">${esc(g.category)}</span>` : ''}</div>`, { wide: true });
+    $$('.thumbs button', m).forEach(b => b.onclick = () => { $('#gv-main', m).src = g.images[+b.dataset.i]; $$('.thumbs button', m).forEach(x => x.classList.toggle('on', x === b)); });
+  }
+  const parseChat = t => String(t || '').split('\n').map(l => l.match(/^\s*([CDcd])\s*:\s*(.+)$/)).filter(Boolean).map(m => ({ me: m[1].toUpperCase() === 'D', text: m[2] }));
+  function renderTestimonials() {
+    const items = active(S.testimonials);
+    $('#opiniones').hidden = !items.length;
+    $('#op-grid').innerHTML = items.map(t => {
+      const ig = /insta/i.test(t.source || '');
+      return `<article class="op"><header><span class="op-av">${esc((t.name || '').trim().charAt(0) || '★')}</span><div><b>${esc(t.name || 'Cliente')}</b><small>${esc(t.product || '')}</small></div><span class="op-src ${ig ? 'ig' : 'wa'}">${ig ? 'Instagram' : 'WhatsApp'}</span></header>
+        <div class="op-chat">${parseChat(t.chat).map(m => `<p class="${m.me ? 'me' : ''}">${esc(m.text)}</p>`).join('')}</div></article>`;
+    }).join('');
+  }
+  function renderFaqs() {
+    const items = active(S.faqs), pct = +S.settings.anticipoPct || 50;
+    $('#faq').hidden = !items.length;
+    $('#faq-list').innerHTML = items.map((f, i) => `<details class="faq" ${i === 0 ? 'open' : ''}><summary>${esc(f.q)}</summary><p>${esc(String(f.a || '').replace(/\{anticipo\}/g, pct))}</p></details>`).join('');
+    // Datos estructurados para que Google pueda mostrar las preguntas en los resultados
+    let ld = document.getElementById('faq-ld');
+    if (!ld) { ld = document.createElement('script'); ld.type = 'application/ld+json'; ld.id = 'faq-ld'; document.head.appendChild(ld); }
+    ld.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: items.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: String(f.a || '').replace(/\{anticipo\}/g, pct) } })) });
+  }
+
   /* ───── COTIZADOR ───── */
   function renderQProducts() {
     const list = activeCat();
@@ -148,6 +188,7 @@
       ${activeExtras().length ? `<div class="cfg-block"><span class="lbl">Personalización y extras</span>${activeExtras().map(e => `<label class="check"><input type="checkbox" data-extra="${e.id}" ${d.extraIds.includes(e.id) ? 'checked' : ''}><span>${esc(e.name)}<em>+${money(e.price)} ${e.scope === 'unico' ? 'único' : 'c/u'}</em></span></label>`).join('')}</div>` : ''}
       <div class="cfg-block"><span class="lbl">Notas de esta línea (opcional)</span><textarea id="line-notes" rows="2" placeholder="Ubicación del diseño, colores de tinta, etc.">${esc(d.notes)}</textarea></div>
       <div class="live" id="live"></div>
+      <div class="cfg-block mk-cta">${d.mockup ? `<img src="${d.mockup}" alt="Vista previa de tu diseño"><div><b>Tu diseño está listo</b><span>Se enviará con tu solicitud.</span><div class="mk-cta-acts"><button class="link" data-act="mockup">Cambiar</button><button class="link" data-act="nomockup">Quitar</button></div></div>` : `<button class="btn ghost" data-act="mockup">👕 Ver cómo queda con tu diseño</button><span class="hint">Sube tu logo y velo sobre la prenda antes de cotizar.</span>`}</div>
       <button class="btn" data-act="add">Agregar a la cotización</button>`;
     updateLive();
   }
@@ -160,11 +201,21 @@
       + (!mayor && c.faltan ? `<br>Te faltan <b>${c.faltan}</b> pzas para precio de mayoreo (${money(p.priceMayoreo)} c/u).` : '')
       + `<span class="big">${money(c.subtotal)}</span>`;
   }
+  function openMockup() {
+    const p = S.catalog.find(x => x.id === S.draft.productId); if (!p) return;
+    window.Mockup.open({ product: p, color: S.draft.color, current: !!S.draft.mockup, onUse: r => {
+      const id = 'd' + Math.random().toString(36).slice(2, 8);
+      S.quote.designs = S.quote.designs || {}; S.quote.designs[id] = r.design;
+      Object.assign(S.draft, { mockup: r.mockup, designId: id, color: r.color });
+      if (r.side === 'back') S.draft.notes = (S.draft.notes ? S.draft.notes + ' · ' : '') + 'Diseño en la espalda';
+      renderConfig(); toast('Diseño listo: se enviará con tu solicitud');
+    } });
+  }
   function addLine() {
     const { p, c } = draftCalc();
     if (c.qty <= 0) { toast('Agrega al menos una pieza.', true); return; }
     const d = S.draft;
-    S.quote.lines.push({ lid: Math.random().toString(36).slice(2, 9), productId: d.productId, color: d.color, cut: d.cut || '', sizes: Object.fromEntries(Object.entries(d.sizes).filter(([, n]) => +n > 0)), qty: (p.sizes || []).length ? 0 : d.qty, extraIds: d.extraIds.slice(), notes: d.notes });
+    S.quote.lines.push({ lid: Math.random().toString(36).slice(2, 9), productId: d.productId, color: d.color, cut: d.cut || '', sizes: Object.fromEntries(Object.entries(d.sizes).filter(([, n]) => +n > 0)), qty: (p.sizes || []).length ? 0 : d.qty, extraIds: d.extraIds.slice(), notes: d.notes, mockup: d.mockup || '', designId: d.designId || '' });
     persist(); S.draft = null; renderQProducts(); renderConfig(); refreshSummary();
     toast('Agregado a tu cotización'); $('#q-right').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -175,7 +226,7 @@
     const cnt = $('#quote-count'); cnt.textContent = n; cnt.dataset.n = n;
     $('#q-lines').innerHTML = n ? q.lines.map(l => {
       const sz = Object.entries(l.sizes).filter(([, v]) => +v > 0).map(([k, v]) => `${k}×${v}`).join(' ');
-      return `<div class="ql"><button class="rm" data-rm="${l.lid}" aria-label="Quitar">×</button><b>${esc(l.name)}</b><small>${[l.cut, l.color, sz].filter(Boolean).map(esc).join(' · ')}<br>${l.qty} pzas · ${l.tier} ${money(l.unit)} c/u${l.extras.length ? '<br>+ ' + l.extras.map(e => esc(e.name)).join(', ') : ''}</small><div class="sub"><span></span><span>${money(l.subtotal)}</span></div></div>`;
+      return `<div class="ql ${l.mockup ? 'has-mk' : ''}"><button class="rm" data-rm="${l.lid}" aria-label="Quitar">×</button>${l.mockup ? `<img class="ql-mk" src="${l.mockup}" alt="">` : ''}<b>${esc(l.name)}</b><small>${[l.cut, l.color, sz].filter(Boolean).map(esc).join(' · ')}<br>${l.qty} pzas · ${l.tier} ${money(l.unit)} c/u${l.extras.length ? '<br>+ ' + l.extras.map(e => esc(e.name)).join(', ') : ''}</small><div class="sub"><span></span><span>${money(l.subtotal)}</span></div></div>`;
     }).join('') : '<div class="q-empty">Aún no agregas nada. Elige un producto a la izquierda.</div>';
     $('#q-totals').innerHTML = n ? `<div class="tot"><span>Total</span><b>${money(q.total)}</b></div>${q.anticipoPct ? `<div class="tot-sub"><span>Anticipo ${q.anticipoPct} %</span><span>${money(q.anticipo)}</span></div>` : ''}<div class="tot-sub"><span>Vigencia</span><span>${q.validityDays} días</span></div>` : '';
     ['q-send', 'q-wa', 'q-dl', 'q-clear'].forEach(id => { $('#' + id).disabled = !n; });
@@ -199,7 +250,7 @@
   }
   function waText(q) {
     const L = q.lines.map(l => { const sz = Object.entries(l.sizes).filter(([, v]) => +v > 0).map(([k, v]) => `${k}×${v}`).join(' '); return `• ${l.name}${l.cut ? ' ' + l.cut : ''}${l.color ? ' (' + l.color + ')' : ''} — ${l.qty} pzas${sz ? ' [' + sz + ']' : ''} = ${money(l.subtotal)}`; }).join('\n');
-    return `Hola Draguz Shop, quiero cotizar:\n${L}\nTotal: ${money(q.total)}\nFolio: ${q.folio}${q.customer.name ? '\nNombre: ' + q.customer.name : ''}${q.customer.notes ? '\nNotas: ' + q.customer.notes : ''}${L.normCode(S.quote.cardCode) ? '\nTarjeta: ' + L.normCode(S.quote.cardCode) : ''}`;
+    return `Hola Draguz Shop, quiero cotizar:\n${L}\nTotal: ${money(q.total)}\nFolio: ${q.folio}${q.customer.name ? '\nNombre: ' + q.customer.name : ''}${q.customer.notes ? '\nNotas: ' + q.customer.notes : ''}${L.normCode(S.quote.cardCode) ? '\nTarjeta: ' + L.normCode(S.quote.cardCode) : ''}${q.lines.some(l => l.mockup) ? '\n(Ya armé la vista previa de mi diseño, te la mando en seguida)' : ''}`;
   }
   async function sendRequest() {
     const q = snap(); if (!q.lines.length) return;
@@ -214,8 +265,12 @@
       const who = S.user
         ? { uid: S.user.uid, email: S.user.email, name: q.customer.name || S.user.name }
         : { uid: null, guest: true, email: '', name: q.customer.name.trim(), customer: Object.assign({}, q.customer, { name: q.customer.name.trim(), phone: q.customer.phone.replace(/\D/g, '') }) };
-      await DB.save('quotes', Object.assign({}, q, who, { cardCode: L.normCode(S.quote.cardCode), status: 'nueva', createdAt: Date.now() }));
-      toast('¡Solicitud enviada! ' + q.folio + (S.user ? '' : ' · Te contactaremos por WhatsApp')); S.quote = { lines: [], customer: S.quote.customer, cardCode: S.quote.cardCode }; persist(); refreshSummary();
+      const used = [...new Set(q.lines.map(l => l.designId).filter(Boolean))];
+      let doc = Object.assign({}, q, who, { designs: Object.fromEntries(used.map(id => [id, (S.quote.designs || {})[id]]).filter(x => x[1])), cardCode: L.normCode(S.quote.cardCode), status: 'nueva', createdAt: Date.now() });
+      if (JSON.stringify(doc).length > 900000) { doc.designs = {}; toast('Tu diseño original es muy pesado: mándalo por WhatsApp. La vista previa sí se envió.', true); }
+      if (JSON.stringify(doc).length > 900000) doc.lines = doc.lines.map(l => Object.assign({}, l, { mockup: '' }));
+      await DB.save('quotes', doc);
+      toast('¡Solicitud enviada! ' + q.folio + (S.user ? '' : ' · Te contactaremos por WhatsApp')); S.quote = { lines: [], customer: S.quote.customer, cardCode: S.quote.cardCode, designs: {} }; persist(); refreshSummary();
     } catch (e) { toast(DB.friendlyError(e), true); } finally { btn.disabled = false; }
   }
 
@@ -332,7 +387,7 @@
   }
 
   /* ───── RUTAS ───── */
-  const SECTIONS = ['stock', 'personaliza', 'cotizador', 'proceso', 'contacto'];
+  const SECTIONS = ['stock', 'personaliza', 'cotizador', 'proceso', 'trabajos', 'opiniones', 'faq', 'contacto'];
   function show(name) { ['home', 'account', 'admin', 'card'].forEach(n => { $('#view-' + n).hidden = n !== name; }); document.body.classList.toggle('in-admin', name === 'admin'); }
   function route() {
     const h = location.hash.replace(/^#\/?/, '');
@@ -384,7 +439,7 @@
 
   /* ───── render global ───── */
   function renderHome() {
-    renderStock(); renderPromos(); renderQProducts(); renderConfig(); refreshSummary();
+    renderStock(); renderPromos(); renderQProducts(); renderConfig(); refreshSummary(); renderGallery(); renderTestimonials(); renderFaqs();
     const wa = (S.settings.whatsapp || CFG.whatsapp || '').replace(/\D/g, '');
     $('#ft-wa').href = wa ? 'https://wa.me/' + wa : '#'; $('#ft-wa').hidden = !wa;
     $('#wa-float').href = wa ? 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hola Draguz Shop, quiero información.') : '#';
@@ -402,6 +457,8 @@
     });
     $('#stock-tabs').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) { S.cat = b.dataset.cat; renderStock(); } });
     $('#stock-grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); });
+    $('#gallery-grid').addEventListener('click', e => { const g = e.target.closest('[data-gal]'); if (g) openGallery(g.dataset.gal); });
+    $('#faq-wa').onclick = () => openWA('Hola Draguz Shop, tengo una duda: ');
     $('#stock-grid').addEventListener('keydown', e => { if (e.key === 'Enter') { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); } });
     $('#promos').addEventListener('click', e => { const p = e.target.closest('[data-pid]'); if (p && p.dataset.pid) setTimeout(() => startDraft(p.dataset.pid), 120); });
     $('#q-products').addEventListener('click', e => { const b = e.target.closest('.qp'); if (b) { startDraft(b.dataset.id); setTimeout(() => $('#q-config').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60); } });
@@ -411,6 +468,8 @@
       const ct = e.target.closest('[data-cut]'); if (ct) { S.draft.cut = ct.dataset.cut; renderConfig(); return; }
       const a = e.target.closest('[data-act]'); if (!a) return;
       if (a.dataset.act === 'cancel') { S.draft = null; renderQProducts(); renderConfig(); } else if (a.dataset.act === 'add') addLine();
+      else if (a.dataset.act === 'mockup') openMockup();
+      else if (a.dataset.act === 'nomockup') { S.draft.mockup = ''; S.draft.designId = ''; renderConfig(); }
     });
     cfg.addEventListener('input', e => {
       const t = e.target;
