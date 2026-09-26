@@ -17,16 +17,20 @@
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 html{background:var(--ink)}
 body{font-family:var(--sans);color:#fff;line-height:1.5;min-height:100vh}
-/* Fondo de tormenta morada fijo (capa aparte para que también quede fijo en iPhone) + destello de rayos */
-body::before,body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background-repeat:no-repeat;background-position:center;background-size:cover}
-body::before{background-image:linear-gradient(rgba(9,9,12,.18),rgba(9,9,12,.18)),url(../assets/img/bg-storm.webp)}
-body::after{background-image:url(../assets/img/bg-bolts.webp);opacity:0;mix-blend-mode:screen;animation:relampago 11s 3s infinite}
-@keyframes relampago{0%,86%,100%{opacity:0}87%{opacity:.85}88%{opacity:.15}89.5%{opacity:1}93%{opacity:0}}
+/* Fondo de tormenta en vivo: nubes que respiran, neblina que se desplaza y rayos en canvas (js/storm.js) */
+.storm{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:var(--ink)}
+.storm-clouds{position:absolute;inset:-7%;background:linear-gradient(rgba(9,9,12,.16),rgba(9,9,12,.16)),url(../assets/img/bg-clouds.webp) center/cover no-repeat;animation:respirar 40s ease-in-out infinite alternate;will-change:transform}
+.storm-fog{position:absolute;top:-12%;left:-10%;width:150%;height:124%;background:url(../assets/img/bg-fog.webp) center/100% 100% no-repeat;mix-blend-mode:screen;opacity:.55;animation:neblina 70s ease-in-out infinite alternate;will-change:transform}
+.storm-fog.f2{transform:scaleX(-1);opacity:.35;animation:neblina2 95s ease-in-out infinite alternate}
+#storm{position:absolute;inset:0;width:100%;height:100%}
+@keyframes respirar{from{transform:scale(1) translate3d(0,0,0)}to{transform:scale(1.08) translate3d(-1.5%,1%,0)}}
+@keyframes neblina{from{transform:translate3d(0,0,0)}to{transform:translate3d(-28%,2%,0)}}
+@keyframes neblina2{from{transform:scaleX(-1) translate3d(0,0,0)}to{transform:scaleX(-1) translate3d(-24%,-3%,0)}}
 @media (max-aspect-ratio:4/5){
-  body::before{background-image:linear-gradient(rgba(9,9,12,.36),rgba(9,9,12,.36)),url(../assets/img/bg-storm-m.webp)}
-  body::after{background-image:url(../assets/img/bg-bolts-m.webp)}
+  .storm-clouds{background-image:linear-gradient(rgba(9,9,12,.34),rgba(9,9,12,.34)),url(../assets/img/bg-clouds-m.webp)}
+  .storm-fog{opacity:.4}.storm-fog.f2{opacity:.25}
 }
-@media (prefers-reduced-motion:reduce){body::after{animation:none}}
+@media (prefers-reduced-motion:reduce){.storm-clouds,.storm-fog{animation:none}}
 /* el texto sobre la tormenta siempre legible */
 .sec-head h2,.sec-head .sub,.sec-head .kicker,.page-view h1,.page-view .sub,.steps h4,.steps p{text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.6)}
 body.noscroll{overflow:hidden}
