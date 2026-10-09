@@ -5,21 +5,53 @@
     const f = v => Math.max(0, Math.min(255, Math.round(v * k)));
     return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => f(v).toString(16).padStart(2, '0')).join('');
   }
-  window.ph = function (kind, color, accent) {
-    color = color || '#1a1a1f'; accent = accent || '#E3000F';
-    const d = shade(color, .7), st = 'stroke="rgba(0,0,0,.28)" stroke-width="1.5"';
-    const ds = `<text x="100" y="122" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-style="italic" font-size="24" fill="${accent}">DS</text>`;
-    const shapes = {
-      tee: `<path d="M60 30 L20 55 L38 90 L58 78 L58 172 L142 172 L142 78 L162 90 L180 55 L140 30 Q100 52 60 30Z" fill="${color}" ${st}/>${ds}`,
-      polo: `<path d="M60 30 L20 55 L38 90 L58 78 L58 172 L142 172 L142 78 L162 90 L180 55 L140 30 L118 44 L100 66 L82 44Z" fill="${color}" ${st}/><path d="M82 44 L100 66 L118 44" fill="none" stroke="${d}" stroke-width="5"/>${ds.replace('y="122"', 'y="128"')}`,
-      hoodie: `<path d="M62 34 L22 62 L34 128 L58 120 L58 176 L142 176 L142 120 L166 128 L178 62 L138 34 Q100 60 62 34Z" fill="${color}" ${st}/><path d="M72 34 Q100 80 128 34" fill="none" stroke="${d}" stroke-width="6"/><rect x="76" y="140" width="48" height="26" rx="6" fill="none" stroke="${d}" stroke-width="3"/>${ds.replace('y="122"', 'y="122"')}`,
-      cap: `<path d="M40 124 Q40 60 100 56 Q160 60 160 124 Z" fill="${color}" ${st}/><path d="M34 124 Q100 138 178 118 Q152 150 60 146 Z" fill="${d}" ${st}/><text x="100" y="106" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-style="italic" font-size="20" fill="${accent}">DS</text>`,
-      mug: `<rect x="56" y="60" width="80" height="94" rx="8" fill="${color}" ${st}/><path d="M136 78 h18 a16 16 0 0 1 0 44 h-18" fill="none" stroke="${color}" stroke-width="10"/>${ds.replace('x="100" y="122"', 'x="96" y="116"')}`,
-      bag: `<path d="M64 84 Q64 44 100 44 Q136 44 136 84" fill="none" stroke="${d}" stroke-width="8"/><rect x="48" y="80" width="104" height="100" rx="6" fill="${color}" ${st}/>${ds.replace('y="122"', 'y="140"')}`,
-      sticker: `<path d="M46 46 h108 v76 l-30 32 H46 Z" fill="${color}" ${st}/><path d="M124 122 v30 l30 -30 Z" fill="${d}"/>${ds.replace('y="122"', 'y="92"')}`
-    };
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">${shapes[kind] || shapes.tee}</svg>`;
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  // Imagen de reemplazo cuando un producto no tiene foto: prenda con volumen, del color del
+  // producto, con el logo real de Draguz Shop, sobre fondo oscuro de estudio. Sube una foto
+  // real desde Admin para reemplazarla.
+  const G = {
+    tee: { body: 'M130 60 L78 82 L28 142 L74 184 L110 152 L110 350 Q200 362 290 350 L290 152 L326 184 L372 142 L322 82 L270 60 Q200 102 130 60 Z', detail: ['M130 60 Q200 102 270 60 Q200 84 130 60 Z'], lines: ['M110 152 L110 190', 'M290 152 L290 190'], logo: [134, 130, 132] },
+    polo: { body: 'M132 62 L80 84 L30 142 L74 184 L110 152 L110 350 Q200 362 290 350 L290 152 L326 184 L372 142 L320 84 L268 62 L232 70 L200 112 L168 70 Z', detail: ['M168 70 L200 112 L186 124 L148 74 Z', 'M232 70 L200 112 L214 124 L252 74 Z'], lines: ['M200 112 L200 190'], logo: [214, 150, 62] },
+    hoodie: { body: 'M140 58 Q200 22 260 58 L320 82 L374 196 L336 210 L300 154 L300 356 Q200 368 100 356 L100 154 L64 210 L26 196 L80 82 Z', detail: ['M158 64 Q200 124 242 64 Q200 84 158 64 Z', 'M130 272 L270 272 L286 332 L114 332 Z'], lines: ['M186 108 L182 170', 'M214 108 L218 170', 'M146 64 Q156 30 200 26 Q244 30 254 64'], logo: [142, 168, 116] },
+    cap: { body: 'M92 244 Q92 108 200 102 Q308 108 308 244 Z', detail: ['M66 240 Q200 280 334 240 Q312 304 200 306 Q88 304 66 240 Z'], lines: ['M200 104 L200 140', 'M140 118 Q120 180 124 244', 'M260 118 Q280 180 276 244'], dots: [[200, 104, 7]], logo: [140, 140, 120] },
+    mug: { body: 'M112 110 L288 110 L288 316 Q288 330 274 330 L126 330 Q112 330 112 316 Z', handle: 1, rim: 1, detail: [], lines: [], logo: [130, 180, 140] },
+    bag: { body: 'M98 150 L302 150 L310 362 L90 362 Z', handles: 1, detail: [], lines: [], logo: [130, 222, 140] },
+    sticker: { body: 'M96 120 Q96 96 120 96 L280 96 Q304 96 304 120 L304 250 L250 304 L120 304 Q96 304 96 280 Z', detail: ['M304 250 L250 304 L262 262 Z'], lines: [], sticker: 1, logo: [112, 160, 176] }
+  };
+  const lum = hex => { const n = parseInt(String(hex).slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
+  const cache = {};
+  window.ph = function (kind, color) {
+    color = /^#[0-9a-f]{6}$/i.test(color || '') ? color : '#141418';
+    const key = kind + color; if (cache[key]) return cache[key];
+    const g = G[kind] || G.tee, light = lum(color) > 0.6;
+    const base = g.sticker ? '#f4f4f4' : color, det = shade(base, light ? 0.86 : 0.68);
+    const lh = Math.round(g.logo[2] * 0.43), cx = g.logo[0] + g.logo[2] / 2, cy = g.logo[1] + lh / 2;
+    // en prendas oscuras, un brillo suave detrás del logo para que destaque como estampado
+    const glow = !light && !g.sticker ? `<ellipse cx="${cx}" cy="${cy}" rx="${g.logo[2] * 0.62}" ry="${lh * 0.9}" fill="url(#lg)"/>` : '';
+    const logo = window.LOGO_DATA ? glow + `<image href="${window.LOGO_DATA}" xlink:href="${window.LOGO_DATA}" x="${g.logo[0]}" y="${g.logo[1]}" width="${g.logo[2]}" height="${lh}" preserveAspectRatio="xMidYMid meet" opacity=".96"/>` : '';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400 400">
+      <defs>
+        <radialGradient id="bg" cx="50%" cy="44%" r="70%"><stop offset="0" stop-color="#2d2542"/><stop offset=".55" stop-color="#15121d"/><stop offset="1" stop-color="#0a0a0e"/></radialGradient>
+        <linearGradient id="sx" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".3" stop-color="#000" stop-opacity="0"/><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>
+        <radialGradient id="hl" cx="42%" cy="34%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity="${light ? 0.32 : 0.14}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <linearGradient id="sy" x1="0" y1="0" x2="0" y2="1"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".26"/></linearGradient>
+        <radialGradient id="lg"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <clipPath id="cp"><path d="${g.body}"/></clipPath>
+        <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity=".6"/></filter>
+      </defs>
+      <rect width="400" height="400" fill="url(#bg)"/>
+      <ellipse cx="200" cy="372" rx="150" ry="16" fill="#000" opacity=".45"/>
+      ${g.handle ? `<path d="M288 150 C356 150 356 280 288 280" fill="none" stroke="${shade(base, 0.9)}" stroke-width="22"/>` : ''}
+      ${g.handles ? `<path d="M145 152 C145 62 255 62 255 152" fill="none" stroke="${shade(base, 0.78)}" stroke-width="12"/>` : ''}
+      <path d="${g.body}" fill="${base}" filter="url(#sh)"/>
+      <g clip-path="url(#cp)"><rect width="400" height="400" fill="url(#sx)"/><rect width="400" height="400" fill="url(#hl)"/><rect width="400" height="400" fill="url(#sy)"/></g>
+      ${g.detail.map(d => `<path d="${d}" fill="${det}"/>`).join('')}
+      ${g.rim ? `<ellipse cx="200" cy="110" rx="88" ry="12" fill="${shade(base, 0.78)}"/>` : ''}
+      <g fill="none" stroke="${light ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.1)'}" stroke-width="2">${g.lines.map(d => `<path d="${d}"/>`).join('')}</g>
+      ${(g.dots || []).map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${det}"/>`).join('')}
+      <path d="${g.body}" fill="none" stroke="${light ? 'rgba(0,0,0,.25)' : 'rgba(255,255,255,.14)'}" stroke-width="1.5"/>
+      ${logo}
+    </svg>`;
+    return (cache[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace(/\n\s*/g, '')));
   };
 
   const C = {
