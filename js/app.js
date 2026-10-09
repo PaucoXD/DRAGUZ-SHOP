@@ -66,14 +66,15 @@
 
   /* ───── HERO ───── */
   const SLIDES = [
-    { img: 'assets/img/cap.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras, hoodies y gorras personalizadas con DTF, UV y vinil.', a: ['Cotizar ahora', '#/cotizador'], b: ['Ver stock', '#/stock'] },
+    { img: 'assets/img/cap.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras, hoodies y gorras personalizadas con DTF, UV y vinil.', tags: ['DTF', 'UV', 'Vinil'], a: ['Cotizar ahora', '#/cotizador'], b: ['Ver stock', '#/stock'] },
     { img: 'assets/img/box_dark.jpg', k: 'Unboxing premium', t: 'Cada pedido, en caja negra', p: 'Empaque mate, hang tag y detalles con tu identidad.', a: ['Ver stock', '#/stock'] },
     { img: 'assets/img/tag_h.jpg', k: 'Mayoreo', t: 'Más piezas, <em>mejor precio</em>', p: 'Arma tu cotización y mira el precio de menudeo o mayoreo al instante.', a: ['Cotizar mayoreo', '#/cotizador'] }
   ];
   let hi = 0, ht;
   function renderHero() {
     const h = $('#hero');
-    h.innerHTML = SLIDES.map((s, i) => `<div class="slide ${i === hi ? 'on' : ''}"><div class="slide-img" style="background-image:url(${s.img})"></div><div class="wrap"><div class="slide-txt"><span class="kicker">${s.k}</span><h1>${s.t}</h1><p>${s.p}</p><div class="row"><a class="btn" href="${s.a[1]}">${s.a[0]}</a>${s.b ? `<a class="btn ghost hero-alt" href="${s.b[1]}">${s.b[0]}</a>` : ''}</div></div></div></div>`).join('')
+    h.innerHTML = SLIDES.map((s, i) => `<div class="slide ${i === hi ? 'on' : ''}"><div class="slide-img" style="background-image:url(${s.img})"></div><div class="wrap"><div class="slide-txt"><span class="kicker">${s.k}</span><h1>${s.t}</h1><p>${s.p}</p>${s.tags ? `<div class="hero-tags">${s.tags.map(t => `<span>${t}</span>`).join('')}</div>` : ''}<div class="row"><a class="btn" href="${s.a[1]}">${s.a[0]}</a>${s.b ? `<a class="btn ghost hero-alt" href="${s.b[1]}">${s.b[0]}</a>` : ''}</div></div></div></div>`).join('')
+      + '<div class="hero-flash" aria-hidden="true"></div><button class="hero-down" aria-label="Ver más"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>'
       + '<button class="arrow prev" aria-label="Anterior">‹</button><button class="arrow next" aria-label="Siguiente">›</button><div class="dots">' + SLIDES.map((_, i) => `<button class="${i === hi ? 'on' : ''}" data-i="${i}" aria-label="Ir a ${i + 1}"></button>`).join('') + '</div>';
   }
   // En celular el inicio muestra un solo mensaje fijo (el carrusel distrae); en computadora rota
@@ -85,6 +86,13 @@
     clearInterval(ht); if (!heroMobile.matches) ht = setInterval(() => goSlide(hi + 1), 6500);
   }
   if (heroMobile.addEventListener) heroMobile.addEventListener('change', () => goSlide(0));
+  // Cada rayo de la tormenta ilumina la foto del inicio
+  let flashT;
+  window.addEventListener('storm:strike', e => {
+    const h = $('#hero'); if (!h || $('#view-home').hidden || window.scrollY > h.offsetHeight) return;
+    h.dataset.side = e.detail.side; h.classList.remove('flash'); void h.offsetWidth; h.classList.add('flash');
+    clearTimeout(flashT); flashT = setTimeout(() => h.classList.remove('flash'), 900);
+  });
 
   /* ───── STOCK ───── */
   function renderStock() {
@@ -521,6 +529,7 @@
 
   function bind() {
     $('#hero').addEventListener('click', e => {
+      if (e.target.closest('.hero-down')) { const q = $('.quick'); (q && q.offsetParent ? q : $('#stock')).scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       if (e.target.closest('.prev')) goSlide(hi - 1); else if (e.target.closest('.next')) goSlide(hi + 1);
       else { const d = e.target.closest('.dots button'); if (d) goSlide(+d.dataset.i); }
     });
