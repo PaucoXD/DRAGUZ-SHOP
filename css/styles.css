@@ -601,3 +601,10 @@ html{-webkit-tap-highlight-color:transparent}
 .hero-tags{display:flex;gap:8px;margin:-12px 0 24px}
 .hero-tags span{font:700 11px var(--mono);letter-spacing:.18em;text-transform:uppercase;padding:6px 10px;border:1px solid rgba(255,255,255,.22);border-radius:30px;background:rgba(255,255,255,.04)}
 @media (max-width:640px){.hero-tags{margin:0 0 22px}}
+
+/* ───── marcos de producto oscuros, a juego con la página ───── */
+:root{--tile:#15121d}
+.card-img,.qp .im,.pgal .main{background:radial-gradient(80% 70% at 50% 42%,#2d2542,#15121d 60%,#0a0a0e)}
+/* la imagen de reemplazo ya trae su propio fondo de estudio: que llene el marco */
+.card-img img[src^="data:image/svg"],.qp .im img[src^="data:image/svg"],.pgal .main img[src^="data:image/svg"]{padding:0;object-fit:cover}
+.card-img{border:1px solid var(--line)}
