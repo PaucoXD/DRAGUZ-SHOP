@@ -77,6 +77,8 @@
     const sheet = kind === 'sheet' || (kind !== 'bolt' && Math.random() < 0.28);  // relámpago entre nubes, sin rayo
     events.push({ o, segs: sheet ? null : makeBolt(o), born: now, grow: sheet ? 0 : rnd(90, 160), decay: sheet ? 260 : rnd(180, 320), double: Math.random() < 0.5, power: sheet ? rnd(0.9, 1.3) : 1 });
     if (!raf) raf = requestAnimationFrame(frame);
+    // avisa a la página (el inicio se ilumina con cada rayo)
+    window.dispatchEvent(new CustomEvent('storm:strike', { detail: { sheet, side: o.x < W / 2 ? 'left' : 'right' } }));
   }
 
   function drawPath(pts, upto) {
