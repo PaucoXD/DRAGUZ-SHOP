@@ -73,15 +73,18 @@
   let hi = 0, ht;
   function renderHero() {
     const h = $('#hero');
-    h.innerHTML = SLIDES.map((s, i) => `<div class="slide ${i === hi ? 'on' : ''}" style="background-image:url(${s.img})"><div class="wrap"><div class="slide-txt"><span class="kicker">${s.k}</span><h1>${s.t}</h1><p>${s.p}</p><div class="row"><a class="btn" href="${s.a[1]}">${s.a[0]}</a>${s.b ? `<a class="btn ghost" href="${s.b[1]}">${s.b[0]}</a>` : ''}</div></div></div></div>`).join('')
+    h.innerHTML = SLIDES.map((s, i) => `<div class="slide ${i === hi ? 'on' : ''}"><div class="slide-img" style="background-image:url(${s.img})"></div><div class="wrap"><div class="slide-txt"><span class="kicker">${s.k}</span><h1>${s.t}</h1><p>${s.p}</p><div class="row"><a class="btn" href="${s.a[1]}">${s.a[0]}</a>${s.b ? `<a class="btn ghost hero-alt" href="${s.b[1]}">${s.b[0]}</a>` : ''}</div></div></div></div>`).join('')
       + '<button class="arrow prev" aria-label="Anterior">‹</button><button class="arrow next" aria-label="Siguiente">›</button><div class="dots">' + SLIDES.map((_, i) => `<button class="${i === hi ? 'on' : ''}" data-i="${i}" aria-label="Ir a ${i + 1}"></button>`).join('') + '</div>';
   }
+  // En celular el inicio muestra un solo mensaje fijo (el carrusel distrae); en computadora rota
+  const heroMobile = window.matchMedia('(max-width: 640px)');
   function goSlide(i) {
-    hi = (i + SLIDES.length) % SLIDES.length;
+    hi = heroMobile.matches ? 0 : (i + SLIDES.length) % SLIDES.length;
     $$('#hero .slide').forEach((s, k) => s.classList.toggle('on', k === hi));
     $$('#hero .dots button').forEach((s, k) => s.classList.toggle('on', k === hi));
-    clearInterval(ht); ht = setInterval(() => goSlide(hi + 1), 6500);
+    clearInterval(ht); if (!heroMobile.matches) ht = setInterval(() => goSlide(hi + 1), 6500);
   }
+  if (heroMobile.addEventListener) heroMobile.addEventListener('change', () => goSlide(0));
 
   /* ───── STOCK ───── */
   function renderStock() {
@@ -497,6 +500,8 @@
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(es => { es.forEach(e => { vis.quoter = e.isIntersecting; }); updateQBar(); }, { rootMargin: '-80px 0px -40% 0px' }).observe($('#cotizador'));
       new IntersectionObserver(es => { es.forEach(e => { vis.right = e.isIntersecting; }); updateQBar(); }, { threshold: 0.12 }).observe($('#q-right'));
+      // en celular, el botón de WhatsApp no tapa los accesos rápidos del inicio
+      new IntersectionObserver(es => es.forEach(e => document.body.classList.toggle('in-quick', e.isIntersecting && !$('#view-home').hidden)), { threshold: 0.3 }).observe($('.quick'));
     }
     let raf; new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(labelTables); }).observe(document.body, { childList: true, subtree: true });
   }

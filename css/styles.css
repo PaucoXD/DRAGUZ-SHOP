@@ -79,8 +79,10 @@ input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:var(--red)}
 
 /* hero */
 .hero{position:relative;height:min(640px,78vh);min-height:460px;overflow:hidden;border-bottom:1px solid var(--line)}
-.slide{position:absolute;inset:0;background-color:#09090C;background-repeat:no-repeat;background-size:auto 100%;background-position:right center;opacity:0;transition:opacity .8s;display:flex;align-items:center}
-.slide .wrap{width:100%}
+.slide{position:absolute;inset:0;background-color:#09090C;opacity:0;transition:opacity .8s;display:flex;align-items:center}
+.slide-img{position:absolute;inset:0;z-index:0;background-repeat:no-repeat;background-size:auto 100%;background-position:right center}
+.slide::before{z-index:1}
+.slide .wrap{width:100%;position:relative;z-index:2}
 .slide.on{opacity:1;z-index:1}
 .slide::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#09090C 0%,rgba(9,9,12,.92) 32%,rgba(9,9,12,0) 58%)}
 .slide-txt{position:relative;max-width:560px}
@@ -366,7 +368,7 @@ html{-webkit-tap-highlight-color:transparent}
 .menu-btn,.nav-m{display:none}
 .q-bar[hidden]{display:none}
 /* el botón de WhatsApp se oculta mientras se arma la cotización (ahí ya hay uno) */
-.in-quoter .wa-float{opacity:0;pointer-events:none;transform:scale(.6)}
+.in-quoter .wa-float,.in-quick .wa-float{opacity:0;pointer-events:none;transform:scale(.6)}
 .wa-float{transition:transform .2s,opacity .2s}
 
 @media (max-width:900px){
@@ -534,3 +536,33 @@ html{-webkit-tap-highlight-color:transparent}
 .trk-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #1d1d25}
 .trk-row.tot{border-bottom:0;font-size:18px;padding-top:12px}
 @media (max-width:640px){.nt-row{flex-wrap:wrap}.nt-row input{flex:1 1 100%}.nt-row .btn{flex:1}}
+
+
+/* ───── inicio en celular: foto arriba, mensaje abajo y accesos rápidos ───── */
+.quick{display:none}
+@media (max-width:640px){
+  .hero{height:auto;min-height:0}
+  .hero .slide{position:relative;inset:auto;display:none;flex-direction:column;align-items:stretch;opacity:1;padding-bottom:0}
+  .hero .slide.on{display:flex}
+  .hero .slide::before{display:none}
+  .slide-img{position:relative;inset:auto;height:34vh;min-height:220px;max-height:320px;background-size:cover;background-position:65% center}
+  .slide-img::after{content:'';position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(transparent,#09090C)}
+  .hero .slide .wrap{padding-top:4px;padding-bottom:26px}
+  .slide-txt{max-width:none}
+  .slide-txt .kicker{margin-bottom:10px}
+  .slide h1{font-size:clamp(30px,9vw,38px);margin-bottom:12px}
+  .slide p{font-size:16px;margin-bottom:20px}
+  .slide .row{flex-direction:column;gap:10px}
+  .slide .row .btn{width:100%;padding:16px}
+  .slide .row .hero-alt{border:0;padding:8px;font-size:13px;color:var(--mute);text-decoration:underline;text-underline-offset:4px}
+  .dots,.arrow{display:none}
+
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:18px 16px 4px}
+  .quick-t{grid-column:1/-1;font:700 11px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--mute)}
+  .quick a{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;background:rgba(18,18,23,.94);border:1px solid var(--line);border-radius:12px;padding:14px 12px;min-height:64px}
+  .quick a:active{border-color:var(--red);background:#1b1520}
+  .quick svg{grid-row:1/3;width:26px;height:26px;color:var(--red)}
+  .quick b{font:800 14px var(--sans);line-height:1.1}
+  .quick small{font-size:11.5px;color:var(--mute);line-height:1.2}
+  .quick a:first-of-type{border-color:rgba(227,0,15,.55)}
+}
