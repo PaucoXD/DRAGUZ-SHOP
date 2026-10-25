@@ -205,6 +205,11 @@ input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:var(--red)}
 .ftr h5{font:700 12px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:14px}
 .ftr a{display:block;color:#b5b5c2;padding:4px 0;font-size:15px}
 .ftr a:hover{color:#fff}
+.ftr .social{display:flex;flex-wrap:wrap;gap:10px}
+.ftr .social a{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid rgba(255,255,255,.14);border-radius:50%;color:#d8d8e2;transition:color .2s,border-color .2s,background .2s}
+.ftr .social a:hover{color:#fff;border-color:var(--red);background:var(--red)}
+.ftr .social a[hidden]{display:none}
+.ftr .social svg{width:20px;height:20px}
 .ftr-bot{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:40px;padding:20px 28px;font:500 12px var(--mono);letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
 
 /* modal + toast */
