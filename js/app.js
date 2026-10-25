@@ -96,7 +96,7 @@
 
   /* ───── HERO ───── */
   const SLIDES = [
-    { img: 'assets/img/cap.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras, hoodies y gorras personalizadas con DTF textil y DTF UV.', tags: ['DTF textil', 'DTF UV', '100% algodón'], a: ['Cotizar ahora', '#/cotizador'], b: ['Ver catálogo', '#/catalogo'] },
+    { img: 'assets/img/hero-playeras.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras y hoodies personalizados con DTF textil y DTF UV.', tags: ['DTF textil', 'DTF UV', '100% algodón'], a: ['Cotizar ahora', '#/cotizador'], b: ['Ver catálogo', '#/catalogo'] },
     { img: 'assets/img/tag_v1.jpg', k: 'Regular u oversize', t: 'Tu corte, <em>tu estilo</em>', p: 'Playeras 100% algodón en corte regular u oversize. Producción en 2 a 3 días.', a: ['Ver catálogo', '#/catalogo'] },
     { img: 'assets/img/tag_h.jpg', k: 'Mayoreo', t: 'Más piezas, <em>mejor precio</em>', p: 'Precio de mayoreo desde 8 playeras. Arma tu cotización y míralo al instante.', a: ['Cotizar mayoreo', '#/cotizador'] }
   ];
@@ -206,7 +206,7 @@
     const first = k => (activeCat().find(x => x.category === k) || activeCat()[0] || {}).id || '';
     const tiles = [
       { img: 'assets/img/tag_v1.jpg', k: 'Playeras y polos', t: 'Tu marca en cada prenda', cat: 'Playeras' },
-      { img: 'assets/img/cap.jpg', k: 'Gorras y accesorios', t: 'Detalles que se notan', cat: 'Gorras' },
+      { img: 'assets/img/hero-playeras.jpg', k: 'Regular u oversize', t: 'Tu diseño, tu corte', cat: 'Playeras' },
       { img: 'assets/img/neck.jpg', k: 'Hoodies', t: 'Tu diseño, en tu prenda', cat: 'Hoodies' }
     ];
     $('#promos').innerHTML = tiles.map(t => `<a class="promo" href="#/cotizador" data-pid="${first(t.cat)}" style="background-image:url(${t.img})"><div><span class="kicker">${t.k}</span><h3>${t.t}</h3><span class="btn sm ghost">Cotizar</span></div></a>`).join('')
