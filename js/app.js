@@ -97,28 +97,47 @@
   /* ───── STOCK ───── */
   function renderStock() {
     const items = activeStock();
-    const cats = ['Todo', ...new Set(items.map(x => x.category).filter(Boolean))];
+    // pestañas: «Nuevos» primero, luego las categorías con más productos
+    const count = {}; items.forEach(x => { if (x.category) count[x.category] = (count[x.category] || 0) + 1; });
+    const nuevos = items.filter(x => x.nuevo).length;
+    const cats = [...(nuevos ? ['Nuevos'] : []), 'Todo', ...Object.keys(count).sort((a, b) => count[b] - count[a])];
+    if (!S.catSet && nuevos) S.cat = 'Nuevos';
     if (!cats.includes(S.cat)) S.cat = 'Todo';
-    $('#stock-tabs').innerHTML = cats.map(c => `<button class="${c === S.cat ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
-    const list = items.filter(x => S.cat === 'Todo' || x.category === S.cat);
+    const n = c => c === 'Todo' ? items.length : c === 'Nuevos' ? nuevos : count[c];
+    $('#stock-tabs').innerHTML = cats.map(c => `<button class="${c === S.cat ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}<b>${n(c)}</b></button>`).join('');
+    const list = items.filter(x => S.cat === 'Todo' || (S.cat === 'Nuevos' ? x.nuevo : x.category === S.cat));
     $('#stock-grid').innerHTML = list.length ? list.map(p => {
-      const q = +p.qty || 0, badge = q <= 0 ? '<span class="badge">Agotado</span>' : q <= 3 ? '<span class="badge red">Últimas piezas</span>' : '';
-      return `<article class="card" data-id="${p.id}" tabindex="0"><div class="card-img"><img loading="lazy" src="${imgOf(p)}" alt="${esc(p.name)}">${badge}</div><div class="card-body"><span class="cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div></div></article>`;
+      const q = +p.qty || 0, out = !p.onDemand && q <= 0;
+      const badge = out ? '<span class="badge">Agotado</span>' : !p.onDemand && q <= 3 ? '<span class="badge red">Últimas piezas</span>' : p.nuevo ? '<span class="badge red">Nuevo</span>' : '';
+      const cuts = (p.cuts || []).length ? `<span class="cuts">${p.cuts.map(esc).join(' · ')}</span>` : '';
+      return `<article class="card" data-id="${p.id}" tabindex="0"><div class="card-img"><img loading="lazy" src="${imgOf(p)}" alt="${esc(p.name)}">${badge}</div><div class="card-body"><span class="cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price-row"><span class="price">${money(p.price)}</span>${cuts}</div></div></article>`;
     }).join('') : '<div class="empty">Pronto subiremos piezas nuevas. Mientras tanto, cotiza lo tuyo abajo.</div>';
   }
   function openStock(id) {
     const p = S.stock.find(x => x.id === id); if (!p) return;
     const imgs = (p.images && p.images.length) ? p.images : [imgOf(p)];
-    const q = +p.qty || 0;
+    const q = +p.qty || 0, ok = p.onDemand || q > 0;
+    const cuts = p.cuts || [], sizes = p.sizes || [];
+    const pick = { cut: cuts[cuts.length - 1] || '', size: '' };
+    const opts = (k, arr) => arr.map(v => `<button type="button" data-${k}="${esc(v)}">${esc(v)}</button>`).join('');
     const m = openModal(`<div class="pgal"><div><div class="main"><img id="pg-main" src="${imgs[0]}" alt="${esc(p.name)}"></div>${imgs.length > 1 ? '<div class="thumbs">' + imgs.map((s, i) => `<button class="${i ? '' : 'on'}" data-i="${i}"><img src="${s}" alt=""></button>`).join('') + '</div>' : ''}</div>
       <div class="pinfo"><span class="tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
       ${p.description ? `<p>${esc(p.description)}</p>` : ''}
-      ${(p.sizes || []).length ? `<span class="lbl">Tallas</span><div class="chips">${p.sizes.map(s => `<span>${esc(s)}</span>`).join('')}</div>` : ''}
-      <p class="tag">${q > 0 ? q + ' en stock' : 'Agotado por ahora'}</p>
-      <button class="btn" id="st-wa" ${q <= 0 ? 'disabled' : ''}>Apartar por WhatsApp</button>
+      ${cuts.length ? `<span class="lbl">Corte</span><div class="chips pick" id="pk-cut">${opts('cut', cuts)}</div>` : ''}
+      ${sizes.length ? `<span class="lbl">Talla</span><div class="chips pick" id="pk-size">${opts('size', sizes)}</div>` : ''}
+      <p class="tag">${p.onDemand ? 'Se imprime bajo pedido' : q > 0 ? q + ' en stock' : 'Agotado por ahora'}</p>
+      <button class="btn" id="st-wa" ${ok ? '' : 'disabled'}>${p.onDemand ? 'Pedir por WhatsApp' : 'Apartar por WhatsApp'}</button>
       <a class="btn ghost" href="#/cotizador" id="st-custom">Quiero algo personalizado</a></div></div>`, { wide: true });
+    const mark = () => { $$('[data-cut]', m).forEach(b => b.classList.toggle('on', b.dataset.cut === pick.cut)); $$('[data-size]', m).forEach(b => b.classList.toggle('on', b.dataset.size === pick.size)); };
+    $$('[data-cut]', m).forEach(b => b.onclick = () => { pick.cut = b.dataset.cut; mark(); });
+    $$('[data-size]', m).forEach(b => b.onclick = () => { pick.size = b.dataset.size; mark(); });
+    mark();
     $$('.thumbs button', m).forEach(b => b.onclick = () => { $('#pg-main', m).src = imgs[+b.dataset.i]; $$('.thumbs button', m).forEach(x => x.classList.toggle('on', x === b)); });
-    $('#st-wa', m).onclick = () => openWA(`Hola Draguz Shop, quiero apartar: ${p.name} (${money(p.price)}). ¿Sigue disponible?`);
+    $('#st-wa', m).onclick = () => {
+      if (sizes.length && !pick.size) { toast('Elige tu talla', true); return; }
+      const det = [pick.cut && 'corte ' + pick.cut.toLowerCase(), pick.size && 'talla ' + pick.size].filter(Boolean).join(', ');
+      openWA(p.onDemand ? `Hola Draguz Shop, quiero pedir: ${p.name}${det ? ' (' + det + ')' : ''}, ${money(p.price)}.` : `Hola Draguz Shop, quiero apartar: ${p.name}${det ? ' (' + det + ')' : ''}, ${money(p.price)}. ¿Sigue disponible?`);
+    };
     $('#st-custom', m).onclick = closeModal;
   }
   function openWA(text) {
@@ -533,7 +552,7 @@
       if (e.target.closest('.prev')) goSlide(hi - 1); else if (e.target.closest('.next')) goSlide(hi + 1);
       else { const d = e.target.closest('.dots button'); if (d) goSlide(+d.dataset.i); }
     });
-    $('#stock-tabs').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) { S.cat = b.dataset.cat; renderStock(); } });
+    $('#stock-tabs').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) { S.cat = b.dataset.cat; S.catSet = true; renderStock(); } });
     $('#stock-grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); });
     $('#gallery-grid').addEventListener('click', e => { const g = e.target.closest('[data-gal]'); if (g) openGallery(g.dataset.gal); });
     $('#faq-wa').onclick = () => openWA('Hola Draguz Shop, tengo una duda: ');

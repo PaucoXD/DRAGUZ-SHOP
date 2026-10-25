@@ -5,7 +5,7 @@ window.Admin = (function () {
   const clone = o => JSON.parse(JSON.stringify(o));
   const TABS = [['resumen', 'Resumen'], ['cotizaciones', 'Cotizaciones'], ['tarjetas', 'Tarjetas y lealtad'], ['lisas', 'Inventario lisas'], ['contenido', 'Galería, opiniones y FAQ'], ['stock', 'Stock'], ['catalogo', 'Catálogo personalizable'], ['extras', 'Extras y estampados'], ['ajustes', 'Ajustes']];
   const STATUS = { nueva: 'Nueva', cotizada: 'Cotizada', proceso: 'En producción', lista: 'Lista para entregar', cerrada: 'Entregada', cancelada: 'Cancelada' };
-  const KINDS = [['tee', 'Playera'], ['polo', 'Polo'], ['hoodie', 'Hoodie'], ['cap', 'Gorra'], ['mug', 'Taza'], ['bag', 'Bolsa'], ['sticker', 'Sticker']];
+  const KINDS = [['tee', 'Playera'], ['oversize', 'Playera oversize'], ['polo', 'Polo'], ['hoodie', 'Hoodie'], ['cap', 'Gorra'], ['mug', 'Taza'], ['bag', 'Bolsa'], ['sticker', 'Sticker']];
   let tab = 'resumen', quotes = [];
 
   /* ── conversores texto ↔ dato ── */
@@ -24,7 +24,7 @@ window.Admin = (function () {
       case 'number': return wrap(`<input type="number" step="any" name="${f.key}" value="${val == null ? '' : val}" ${f.req ? 'required' : ''}>`);
       case 'area': return wrap(`<textarea name="${f.key}" rows="3">${esc(val || '')}</textarea>`, true);
       case 'select': return wrap(`<select name="${f.key}">${f.opts.map(o => `<option value="${o[0]}" ${o[0] === val ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>`);
-      case 'check': return `<label class="ck"><input type="checkbox" name="${f.key}" ${val !== false ? 'checked' : ''}> ${f.label}</label>`;
+      case 'check': return `<label class="ck"><input type="checkbox" name="${f.key}" ${(f.off ? val === true : val !== false) ? 'checked' : ''}> ${f.label}</label>`;
       case 'list': return wrap(`<input name="${f.key}" value="${esc(listOut(val))}" placeholder="${f.ph || ''}">`);
       case 'pairs': return wrap(`<input name="${f.key}" value="${esc(pairsOut(val))}" placeholder="${f.ph || ''}">`);
       case 'colors': return wrap(`<input name="${f.key}" value="${esc(colorsOut(val))}" placeholder="${f.ph || ''}">`, true);
@@ -70,11 +70,13 @@ window.Admin = (function () {
   const cats = () => [...new Set([...S.stock, ...S.catalog].map(x => x.category).filter(Boolean))];
   const DEFS = {
     stock: {
-      title: 'Stock', add: 'Nuevo producto en stock', blank: () => ({ name: '', category: '', price: 0, qty: 1, sizes: [], description: '', images: [], active: true }),
+      title: 'Stock', add: 'Nuevo producto en stock', blank: () => ({ name: '', category: '', price: 0, qty: 1, sizes: [], cuts: ['Regular', 'Oversize'], description: '', images: [], nuevo: true, onDemand: false, active: true, createdAt: Date.now() }),
       fields: () => [{ key: 'name', label: 'Nombre', req: 1 }, { key: 'category', label: 'Categoría', list: cats(), ph: 'Playeras, Hoodies, Gorras…' }, { key: 'price', label: 'Precio (MXN)', type: 'number', req: 1 }, { key: 'qty', label: 'Piezas disponibles', type: 'number' },
-        { key: 'sizes', label: 'Tallas disponibles', type: 'list', ph: 'S, M, L, XL', hint: 'Separadas por coma. Déjalo vacío si no aplica.' }, { key: 'active', label: 'Visible en la tienda', type: 'check' },
+        { key: 'sizes', label: 'Tallas disponibles', type: 'list', ph: 'S, M, L, XL', hint: 'Separadas por coma. Déjalo vacío si no aplica.' },
+        { key: 'cuts', label: 'Cortes', type: 'list', ph: 'Regular, Oversize', hint: 'El cliente elige el corte dentro del producto. Vacío si no aplica.' },
+        { key: 'active', label: 'Visible en la tienda', type: 'check' }, { key: 'nuevo', label: 'Mostrar en «Nuevos»', type: 'check', off: 1 }, { key: 'onDemand', label: 'Bajo pedido (se imprime al pedirla, no se agota)', type: 'check', off: 1 },
         { key: 'description', label: 'Descripción', type: 'area' }, { key: 'images', label: 'Fotos (hasta 3)', type: 'images', max: 3, hint: 'Se comprimen automáticamente. La primera es la portada.' }],
-      cols: [['', r => `<img src="${window.DZ.imgOf(r)}" alt="">`], ['Producto', r => `<b>${esc(r.name)}</b><br><span class="tag">${esc(r.category)}</span>`], ['Precio', r => money(r.price)], ['Piezas', r => r.qty > 0 ? r.qty : '<span class="st nueva">Agotado</span>'], ['Visible', r => r.active !== false ? 'Sí' : 'No']]
+      cols: [['', r => `<img src="${window.DZ.imgOf(r)}" alt="">`], ['Producto', r => `<b>${esc(r.name)}</b><br><span class="tag">${esc(r.category)}</span>`], ['Precio', r => money(r.price)], ['Piezas', r => r.onDemand ? 'Bajo pedido' : r.qty > 0 ? r.qty : '<span class="st nueva">Agotado</span>'], ['Visible', r => r.active !== false ? 'Sí' : 'No']]
     },
     catalog: {
       title: 'Catálogo personalizable', add: 'Nuevo producto personalizable', blank: () => ({ name: '', category: '', kind: 'tee', description: '', priceMenudeo: 0, priceMayoreo: 0, mayoreoMin: 12, sizes: [], sizeExtra: {}, cuts: [], colors: [], images: [], active: true, order: 99 }),

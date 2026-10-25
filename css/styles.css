@@ -602,9 +602,15 @@ html{-webkit-tap-highlight-color:transparent}
 .hero-tags span{font:700 11px var(--mono);letter-spacing:.18em;text-transform:uppercase;padding:6px 10px;border:1px solid rgba(255,255,255,.22);border-radius:30px;background:rgba(255,255,255,.04)}
 @media (max-width:640px){.hero-tags{margin:0 0 22px}}
 
-/* ───── marcos de producto oscuros, a juego con la página ───── */
+/* ───── catálogo: fotos a sangre, marcos oscuros, pestañas con conteo, corte y talla ───── */
 :root{--tile:#15121d}
 .card-img,.qp .im,.pgal .main{background:radial-gradient(80% 70% at 50% 42%,#2d2542,#15121d 60%,#0a0a0e)}
-/* la imagen de reemplazo ya trae su propio fondo de estudio: que llene el marco */
-.card-img img[src^="data:image/svg"],.qp .im img[src^="data:image/svg"],.pgal .main img[src^="data:image/svg"]{padding:0;object-fit:cover}
 .card-img{border:1px solid var(--line)}
+/* las fotos de producto ya traen su fondo: que llenen el marco */
+.card-img img,.pgal .main img{padding:0;object-fit:cover}
+.tabs button b{font-weight:500;color:var(--dim);margin-left:6px;letter-spacing:0}
+.price-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card .cuts{font:500 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.chips.pick button{border:1px solid #3a3a46;border-radius:30px;padding:7px 16px;font:700 13px var(--mono);color:#fff}
+.chips.pick button:hover{border-color:#6c6c7b}
+.chips.pick button.on{border-color:var(--red);background:rgba(227,0,15,.16)}
