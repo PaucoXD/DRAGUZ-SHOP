@@ -118,6 +118,13 @@ window.DB = (function () {
     },
     async save(col, obj) {
       const id = obj.id; const data = strip(obj); delete data.id;
+      if (col === 'stock') {
+        // Nunca guardar una pieza cargada «sin fotos» (la vista de clientes), borraría su foto
+        if (data.lite) throw new Error('Recarga el panel antes de guardar.');
+        delete data.foto;
+        // Huella de la foto: si cambia, la página deja de usar el archivo de assets/catalogo y carga la nueva
+        const im = (data.images || [])[0]; data.fotoKey = im ? im.length + '-' + im.slice(-12) : '';
+      }
       if (id) { await fs.collection(col).doc(id).set(data); return id; }
       return (await fs.collection(col).add(data)).id;
     },

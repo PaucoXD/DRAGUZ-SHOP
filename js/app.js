@@ -51,7 +51,7 @@
   const byOrder = (a, b) => (a.order || 999) - (b.order || 999) || String(a.name).localeCompare(b.name);
   async function loadAll() {
     const soft = col => DB.list(col).catch(() => null);
-    const [c, e, s, st, t, f, g] = await Promise.all([DB.list('catalog'), DB.list('extras'), DB.list('stock'), DB.getSettings(), soft('testimonials'), soft('faqs'), soft('gallery')]);
+    const [c, e, s, st, t, f, g] = await Promise.all([DB.list('catalog'), DB.list('extras'), S.stockFull ? DB.list('stock') : stockLite(), DB.getSettings(), soft('testimonials'), soft('faqs'), soft('gallery')]);
     S.catalog = c.sort(byOrder); S.extras = e.sort(byOrder); S.stock = s.sort(byOrder); S.settings = st;
     // Opiniones y preguntas: mientras no cargues las tuyas, se muestran las de ejemplo
     S.testimonials = (t && t.length ? t : window.SEED.testimonials).slice().sort(byOrder); S.testimonialsSeeded = !(t && t.length);
@@ -59,15 +59,45 @@
     S.gallery = (g || []).slice().sort((a, b) => (a.order || 999) - (b.order || 999) || (b.createdAt || 0) - (a.createdAt || 0));
   }
   async function reload() { await loadAll(); renderHome(); }
-  const imgOf = p => (p.images && p.images[0]) || window.ph(p.kind || 'tee', (p.colors && p.colors[0] && p.colors[0].hex) || '#1a1a1f');
+
+  // Clientes: el catálogo se baja sin fotos (pesan ~2 MB). Cada foto es un archivo ligero de assets/catalogo que carga al verse.
+  const FS_URL = CFG.firebase && CFG.firebase.projectId ? `https://firestore.googleapis.com/v1/projects/${CFG.firebase.projectId}/databases/(default)/documents/stock` : '';
+  const FOTOS = window.CAT_FOTOS || {};
+  const fsVal = v => { const k = Object.keys(v)[0], x = v[k]; return k === 'arrayValue' ? (x.values || []).map(fsVal) : k === 'mapValue' ? fsDoc(x) : k === 'integerValue' || k === 'doubleValue' ? +x : k === 'nullValue' ? null : x; };
+  const fsDoc = d => { const o = {}; Object.entries(d.fields || {}).forEach(([k, v]) => { o[k] = fsVal(v); }); return o; };
+  async function stockLite() {
+    if (!FS_URL) return DB.list('stock');
+    try {
+      const mask = ['name', 'description', 'category', 'price', 'qty', 'onDemand', 'sizes', 'cuts', 'nuevo', 'active', 'order', 'kind', 'colors', 'createdAt', 'fotoKey'].map(f => 'mask.fieldPaths=' + f).join('&');
+      let out = [], tok = '';
+      do {
+        const r = await fetch(`${FS_URL}?pageSize=300&${mask}${tok ? '&pageToken=' + encodeURIComponent(tok) : ''}`); if (!r.ok) throw new Error(r.status);
+        const j = await r.json(); tok = j.nextPageToken || '';
+        out = out.concat((j.documents || []).map(d => { const id = d.name.split('/').pop(), p = Object.assign({ id, lite: true }, fsDoc(d)); if (FOTOS[id] && (!p.fotoKey || p.fotoKey === FOTOS[id])) p.foto = 'assets/catalogo/' + id + '.webp'; return p; }));
+      } while (tok);
+      return out;
+    } catch (e) { console.warn('Catálogo ligero no disponible, cargando completo:', e); return DB.list('stock'); }
+  }
+  // Piezas nuevas o con foto cambiada en Admin: su foto se pide aparte, una por una
+  const fotoPend = {};
+  function fillFotos() {
+    if (!FS_URL) return;
+    $$('img[data-sid]').forEach(img => {
+      const p = S.stock.find(x => x.id === img.dataset.sid); if (!p || p.foto || (p.images && p.images[0])) return;
+      (fotoPend[p.id] = fotoPend[p.id] || fetch(`${FS_URL}/${p.id}?mask.fieldPaths=images`).then(r => r.json()).then(d => { p.images = fsDoc(d).images || []; })).then(() => {
+        if (p.images[0]) $$(`img[data-sid="${p.id}"]`).forEach(i => { i.src = p.images[0]; });
+      }).catch(() => { });
+    });
+  }
+  const imgOf = p => p.foto || (p.images && p.images[0]) || window.ph(p.kind || 'tee', (p.colors && p.colors[0] && p.colors[0].hex) || '#1a1a1f');
   const activeStock = () => S.stock.filter(x => x.active !== false);
   const activeCat = () => S.catalog.filter(x => x.active !== false);
   const activeExtras = () => S.extras.filter(x => x.active !== false);
 
   /* ───── HERO ───── */
   const SLIDES = [
-    { img: 'assets/img/cap.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras, hoodies y gorras personalizadas con DTF textil y DTF UV.', tags: ['DTF textil', 'DTF UV', '100% algodón'], a: ['Cotizar ahora', '#/cotizador'], b: ['Ver stock', '#/stock'] },
-    { img: 'assets/img/tag_v1.jpg', k: 'Regular u oversize', t: 'Tu corte, <em>tu estilo</em>', p: 'Playeras 100% algodón en corte regular u oversize. Producción en 2 a 3 días.', a: ['Ver stock', '#/stock'] },
+    { img: 'assets/img/cap.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras, hoodies y gorras personalizadas con DTF textil y DTF UV.', tags: ['DTF textil', 'DTF UV', '100% algodón'], a: ['Cotizar ahora', '#/cotizador'], b: ['Ver catálogo', '#/catalogo'] },
+    { img: 'assets/img/tag_v1.jpg', k: 'Regular u oversize', t: 'Tu corte, <em>tu estilo</em>', p: 'Playeras 100% algodón en corte regular u oversize. Producción en 2 a 3 días.', a: ['Ver catálogo', '#/catalogo'] },
     { img: 'assets/img/tag_h.jpg', k: 'Mayoreo', t: 'Más piezas, <em>mejor precio</em>', p: 'Precio de mayoreo desde 8 playeras. Arma tu cotización y míralo al instante.', a: ['Cotizar mayoreo', '#/cotizador'] }
   ];
   let hi = 0, ht;
@@ -105,7 +135,9 @@
     if (!cats.includes(S.cat)) S.cat = 'Todo';
     const n = c => c === 'Todo' ? items.length : c === 'Nuevos' ? nuevos : count[c];
     $('#stock-tabs').innerHTML = cats.map(c => `<button class="${c === S.cat ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}<b>${n(c)}</b></button>`).join('');
-    const list = items.filter(x => S.cat === 'Todo' || (S.cat === 'Nuevos' ? x.nuevo : x.category === S.cat));
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const qs = norm(S.q).trim();
+    const list = items.filter(x => (S.cat === 'Todo' || (S.cat === 'Nuevos' ? x.nuevo : x.category === S.cat)) && (!qs || norm(x.name + ' ' + x.category).includes(qs)));
     // Populares: hasta 10 piezas disponibles al azar (se eligen una vez por visita), en una fila que se desliza
     const avail = items.filter(x => x.onDemand || (+x.qty || 0) > 0);
     if (!S.pop || S.pop.length < Math.min(10, avail.length) || S.pop.some(id => !avail.find(x => x.id === id))) S.pop = avail.map(x => x.id).sort(() => Math.random() - .5).slice(0, 10);
@@ -114,19 +146,22 @@
     $('#pop-track').innerHTML = row + row.replace(/<article /g, '<article aria-hidden="true" ').replace(/tabindex="0"/g, 'tabindex="-1"');
     $('#pop-track').style.setProperty('--dur', Math.max(20, pop.length * 5) + 's');
     $('#pop-row').hidden = !pop.length;
-    $('#stock-all-btn').parentElement.hidden = !items.length;
-    $('#stock-all-btn').textContent = $('#stock-all').hidden ? `Ver todo el catálogo (${items.length})` : 'Ocultar catálogo';
-    $('#stock-grid').innerHTML = list.length ? list.map(stockCard).join('') : '<div class="empty">Pronto subiremos piezas nuevas. Mientras tanto, cotiza lo tuyo abajo.</div>';
+    // Catálogo: se muestran de 12 en 12 para que el celular no cargue todo de golpe
+    S.shown = S.shown || 12;
+    $('#stock-grid').innerHTML = list.length ? list.slice(0, S.shown).map(stockCard).join('') : `<div class="empty">${qs ? 'No encontramos ese diseño. Prueba con otra palabra o cotiza el tuyo abajo.' : 'Pronto subiremos piezas nuevas. Mientras tanto, cotiza lo tuyo abajo.'}</div>`;
+    $('#stock-more').hidden = list.length <= S.shown;
+    $('#stock-more').textContent = `Ver más diseños (${Math.max(0, list.length - S.shown)})`;
+    fillFotos();
   }
   function stockCard(p) {
     const q = +p.qty || 0, out = !p.onDemand && q <= 0;
       const badge = out ? '<span class="badge">Agotado</span>' : !p.onDemand && q <= 3 ? '<span class="badge red">Últimas piezas</span>' : p.nuevo ? '<span class="badge red">Nuevo</span>' : '';
       const cuts = (p.cuts || []).length ? `<span class="cuts">${p.cuts.map(esc).join(' · ')}</span>` : '';
-      return `<article class="card" data-id="${p.id}" tabindex="0"><div class="card-img"><img loading="lazy" src="${imgOf(p)}" alt="${esc(p.name)}">${badge}</div><div class="card-body"><span class="cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price-row"><span class="price">${money(p.price)}</span>${cuts}</div></div></article>`;
+      return `<article class="card" data-id="${p.id}" tabindex="0"><div class="card-img"><img loading="lazy" decoding="async" data-sid="${p.id}" src="${imgOf(p)}" alt="Playera ${esc(p.name)}">${badge}</div><div class="card-body"><span class="cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price-row"><span class="price">${money(p.price)}</span>${cuts}</div>${out ? '' : '<span class="btn sm card-cta">Lo quiero</span>'}</div></article>`;
   }
   function openStock(id) {
     const p = S.stock.find(x => x.id === id); if (!p) return;
-    const imgs = (p.images && p.images.length) ? p.images : [imgOf(p)];
+    const imgs = p.foto ? [p.foto] : (p.images && p.images.length) ? p.images : [imgOf(p)];
     const q = +p.qty || 0, ok = p.onDemand || q > 0;
     const cuts = p.cuts || [], sizes = p.sizes || [];
     const pick = { cut: cuts[cuts.length - 1] || '', size: '' };
@@ -134,14 +169,15 @@
     const m = openModal(`<div class="pgal"><div><div class="main"><img id="pg-main" src="${imgs[0]}" alt="${esc(p.name)}"></div>${imgs.length > 1 ? '<div class="thumbs">' + imgs.map((s, i) => `<button class="${i ? '' : 'on'}" data-i="${i}"><img src="${s}" alt=""></button>`).join('') + '</div>' : ''}</div>
       <div class="pinfo"><span class="tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
       ${p.description ? `<p>${esc(p.description)}</p>` : ''}
-      ${cuts.length ? `<span class="lbl">Corte</span><div class="chips pick" id="pk-cut">${opts('cut', cuts)}</div>` : ''}
+      ${cuts.length ? `<span class="lbl">Corte</span><div class="chips pick" id="pk-cut">${opts('cut', cuts)}</div>${fitHTML(cuts)}` : ''}
       ${sizes.length ? `<span class="lbl">Talla</span><div class="chips pick" id="pk-size">${opts('size', sizes)}</div>` : ''}
       <p class="tag">${p.onDemand ? 'Se imprime bajo pedido' : q > 0 ? q + ' en stock' : 'Agotado por ahora'}</p>
       <button class="btn" id="st-wa" ${ok ? '' : 'disabled'}>${p.onDemand ? 'Pedir por WhatsApp' : 'Apartar por WhatsApp'}</button>
       <a class="btn ghost" href="#/cotizador" id="st-custom">Quiero algo personalizado</a></div></div>`, { wide: true });
-    const mark = () => { $$('[data-cut]', m).forEach(b => b.classList.toggle('on', b.dataset.cut === pick.cut)); $$('[data-size]', m).forEach(b => b.classList.toggle('on', b.dataset.size === pick.size)); };
+    const mark = () => { $$('[data-cut]', m).forEach(b => b.classList.toggle('on', b.dataset.cut === pick.cut)); $$('[data-fit]', m).forEach(b => b.classList.toggle('on', b.dataset.fit === pick.cut)); $$('[data-size]', m).forEach(b => b.classList.toggle('on', b.dataset.size === pick.size)); };
     $$('[data-cut]', m).forEach(b => b.onclick = () => { pick.cut = b.dataset.cut; mark(); });
     $$('[data-size]', m).forEach(b => b.onclick = () => { pick.size = b.dataset.size; mark(); });
+    $$('[data-fit]', m).forEach(b => b.onclick = () => { pick.cut = b.dataset.fit; mark(); });
     mark();
     $$('.thumbs button', m).forEach(b => b.onclick = () => { $('#pg-main', m).src = imgs[+b.dataset.i]; $$('.thumbs button', m).forEach(x => x.classList.toggle('on', x === b)); });
     $('#st-wa', m).onclick = () => {
@@ -150,6 +186,13 @@
       openWA(p.onDemand ? `Hola Draguz Shop, quiero pedir: ${p.name}${det ? ' (' + det + ')' : ''}, ${money(p.price)}.` : `Hola Draguz Shop, quiero apartar: ${p.name}${det ? ' (' + det + ')' : ''}, ${money(p.price)}. ¿Sigue disponible?`);
     };
     $('#st-custom', m).onclick = closeModal;
+  }
+  // Regular vs oversize lado a lado, para que se vea la diferencia de corte
+  function fitHTML(cuts) {
+    const info = { regular: ['tee', 'Ajuste clásico, a tu medida'], oversize: ['oversize', 'Más holgada, hombro caído'] };
+    const f = cuts.map(c => [c, info[String(c).toLowerCase()]]).filter(x => x[1]);
+    if (f.length < 2) return '';
+    return `<div class="fit-cmp">${f.map(([c, [k, t]]) => `<div data-fit="${esc(c)}"><img src="${window.ph(k, '#1a1a1f')}" alt="Corte ${esc(c)}"><b>${esc(c)}</b><small>${t}</small></div>`).join('')}</div>`;
   }
   function openWA(text) {
     const n = (S.settings.whatsapp || CFG.whatsapp || '').replace(/\D/g, '');
@@ -501,7 +544,7 @@
   }
 
   /* ───── RUTAS ───── */
-  const SECTIONS = ['stock', 'personaliza', 'cotizador', 'proceso', 'trabajos', 'opiniones', 'faq', 'contacto'];
+  const SECTIONS = ['stock', 'catalogo', 'personaliza', 'cotizador', 'proceso', 'trabajos', 'opiniones', 'faq', 'contacto'];
   function show(name) { ['home', 'account', 'admin', 'card', 'track'].forEach(n => { $('#view-' + n).hidden = n !== name; }); document.body.classList.toggle('in-admin', name === 'admin'); }
   function route() {
     const h = location.hash.replace(/^#\/?/, '');
@@ -511,7 +554,8 @@
     else if (h === 'admin') {
       if (!S.isAdmin && S.adminPending) { show('home'); return; }
       if (!S.isAdmin) { show('home'); if (S.user) toast('Tu cuenta no tiene permisos de administrador.', true); else openAuth('login'); return; }
-      show('admin'); loadAdmin().then(() => { window.Admin.render(); window.scrollTo(0, 0); }).catch(() => toast('No se pudo cargar el panel. Revisa tu conexión.', true));
+      // El panel necesita el catálogo completo (con fotos) para poder editarlo
+      show('admin'); loadAdmin().then(() => S.stockFull ? 0 : (S.stockFull = true, loadAll())).then(() => { window.Admin.render(); window.scrollTo(0, 0); }).catch(() => toast('No se pudo cargar el panel. Revisa tu conexión.', true));
     } else {
       show('home');
       if (SECTIONS.includes(h)) { const el = document.getElementById(h); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 30); }
@@ -575,10 +619,11 @@
       if (e.target.closest('.prev')) goSlide(hi - 1); else if (e.target.closest('.next')) goSlide(hi + 1);
       else { const d = e.target.closest('.dots button'); if (d) goSlide(+d.dataset.i); }
     });
-    $('#stock-tabs').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) { S.cat = b.dataset.cat; S.catSet = true; renderStock(); } });
+    $('#stock-tabs').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) { S.cat = b.dataset.cat; S.catSet = true; S.shown = 12; renderStock(); } });
     $('#stock-grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); });
     $('#pop-track').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); });
-    $('#stock-all-btn').addEventListener('click', () => { $('#stock-all').hidden = !$('#stock-all').hidden; renderStock(); });
+    $('#stock-more').addEventListener('click', () => { S.shown += 12; renderStock(); });
+    let qT; $('#stock-q').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { S.q = e.target.value; S.shown = 12; if (S.q && !S.catSet) S.cat = 'Todo'; renderStock(); }, 150); });
     $('#gallery-grid').addEventListener('click', e => { const g = e.target.closest('[data-gal]'); if (g) openGallery(g.dataset.gal); });
     $('#faq-wa').onclick = () => openWA('Hola Draguz Shop, tengo una duda: ');
     $('#stock-grid').addEventListener('keydown', e => { if (e.key === 'Enter') { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); } });

@@ -630,3 +630,16 @@ html{-webkit-tap-highlight-color:transparent}
 #stock-all{margin-top:30px}
 @media (max-width:640px){.pop-track .card{flex-basis:170px;margin-right:14px}}
 @media (prefers-reduced-motion:reduce){.pop-track{animation:none}.pop-row{overflow-x:auto}}
+
+/* Catálogo: buscador, botón «Lo quiero» y comparación de cortes */
+.cat-tools{display:flex;justify-content:center;margin:-6px 0 22px}
+.cat-tools input{width:100%;max-width:460px;padding:13px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font:500 15px var(--sans)}
+.cat-tools input:focus{outline:none;border-color:var(--red)}
+.card .card-cta{display:inline-block;margin-top:10px;pointer-events:none}
+.fit-cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 4px}
+.fit-cmp div{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px;text-align:center;opacity:.55;transition:opacity .2s,border-color .2s}
+.fit-cmp div.on{opacity:1;border-color:var(--red)}
+.fit-cmp img{width:100%;max-width:120px;aspect-ratio:1;object-fit:contain}
+.fit-cmp b{display:block;font-size:13px}
+.fit-cmp small{display:block;font-size:11.5px;color:var(--dim);line-height:1.3}
+@media (max-width:640px){.card .card-cta{padding:7px 12px;font-size:11px}}
