@@ -562,6 +562,8 @@
     $('#wa-float').href = wa ? 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hola Draguz Shop, quiero información.') : '#';
     $('#wa-float').hidden = !wa;
     if (CFG.facebook) { $('#ft-fb').href = CFG.facebook; $('#ft-fb').hidden = false; }
+    if (CFG.instagram) { $('#ft-ig').href = CFG.instagram; $('#ft-ig').hidden = false; }
+    if (CFG.tiktok) { $('#ft-tt').href = CFG.tiktok; $('#ft-tt').hidden = false; }
     $('#q-name').value = S.quote.customer.name || ''; $('#q-phone').value = S.quote.customer.phone || ''; $('#q-notes').value = S.quote.customer.notes || '';
     if (!S.quote.cardCode) { try { S.quote.cardCode = localStorage.getItem('dz_card') || ''; } catch (e) { } }
     $('#q-card').value = S.quote.cardCode || ''; checkCard();

@@ -16,5 +16,7 @@ window.DRAGUZ_CONFIG = {
   // WhatsApp con lada país, sin + ni espacios. Ej: 5218112345678
   // (también se puede cambiar después desde Admin > Ajustes)
   whatsapp: "",
-  facebook: ""
+  facebook: "https://www.facebook.com/profile.php?id=61577445835030",
+  instagram: "https://www.instagram.com/draguz_shop/",
+  tiktok: "https://www.tiktok.com/@draguzshop"
 };
