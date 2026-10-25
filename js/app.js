@@ -192,9 +192,18 @@
   }
 
   /* ───── COTIZADOR ───── */
+  // En el cotizador las playeras y polos siempre se ven realistas, en el color y corte elegidos
+  const REAL_KINDS = ['tee', 'oversize', 'polo'];
+  const qImg = (p, d) => {
+    let kind = p.kind || 'tee';
+    if (!REAL_KINDS.includes(kind) || !(window.PRENDAS && window.PRENDAS[kind])) return imgOf(p);
+    if (kind === 'tee' && d && /over/i.test(d.cut || '')) kind = 'oversize';
+    const c = (d && (p.colors || []).find(x => x.name === d.color)) || (p.colors || [])[0];
+    return window.ph(kind, (c && c.hex) || '#1a1a1f', null, { logo: true });
+  };
   function renderQProducts() {
     const list = activeCat();
-    $('#q-products').innerHTML = list.length ? list.map(p => `<button class="qp ${S.draft && S.draft.productId === p.id ? 'on' : ''}" data-id="${p.id}"><div class="im"><img src="${imgOf(p)}" alt=""></div><div class="tx"><b>${esc(p.name)}</b><span>desde ${money(p.priceMayoreo || p.priceMenudeo)}</span></div></button>`).join('') : '<div class="q-empty">El catálogo aún está vacío.</div>';
+    $('#q-products').innerHTML = list.length ? list.map(p => `<button class="qp ${S.draft && S.draft.productId === p.id ? 'on' : ''}" data-id="${p.id}"><div class="im"><img src="${qImg(p)}" alt=""></div><div class="tx"><b>${esc(p.name)}</b><span>desde ${money(p.priceMayoreo || p.priceMenudeo)}</span></div></button>`).join('') : '<div class="q-empty">El catálogo aún está vacío.</div>';
   }
   function startDraft(pid) {
     const p = S.catalog.find(x => x.id === pid); if (!p) return;
@@ -209,6 +218,7 @@
     const hasSizes = (p.sizes || []).length > 0;
     box.hidden = false;
     box.innerHTML = `<div class="cfg-head"><h3><b>2</b> Configura: ${esc(p.name)}</h3><button class="link" data-act="cancel">Cambiar</button></div>
+      <div class="qp" style="pointer-events:none;max-width:280px;margin:0 auto"><div class="im"><img src="${qImg(p, d)}" alt="${esc(p.name)}"></div></div>
       ${p.description ? `<p class="hint" style="margin:0">${esc(p.description)}</p>` : ''}
       ${(p.colors || []).length ? `<div class="cfg-block"><span class="lbl">Color</span><div class="swatches">${p.colors.map(c => `<button class="sw ${c.name === d.color ? 'on' : ''}" data-color="${esc(c.name)}" title="${esc(c.name)}" style="--c:${esc(c.hex)}" aria-label="${esc(c.name)}"></button>`).join('')}<span class="hint">${esc(d.color)}</span></div></div>` : ''}
       ${(p.cuts || []).length ? `<div class="cfg-block"><span class="lbl">Corte</span><div class="cut-chips">${p.cuts.map(c => `<button type="button" class="${c === d.cut ? 'on' : ''}" data-cut="${esc(c)}">${esc(c)}</button>`).join('')}</div></div>` : ''}

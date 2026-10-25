@@ -5,14 +5,16 @@
     const f = v => Math.max(0, Math.min(255, Math.round(v * k)));
     return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => f(v).toString(16).padStart(2, '0')).join('');
   }
-  window.ph = function (kind, color, accent) {
+  window.ph = function (kind, color, accent, opts) {
     color = color || '#1a1a1f'; accent = accent || '#E3000F';
     const real = window.PRENDAS && window.PRENDAS[kind];
     if (real) {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 460 460"><defs><filter id="t" color-interpolation-filters="sRGB"><feFlood flood-color="${color}"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs>`
         + `<g style="isolation:isolate"><image width="460" height="460" xlink:href="${real[0]}" filter="url(#t)"/>`
         + `<image width="460" height="460" xlink:href="${real[0]}" style="mix-blend-mode:multiply"/>`
-        + `<image width="460" height="460" xlink:href="${real[1]}" style="mix-blend-mode:screen"/></g></svg>`;
+        + `<image width="460" height="460" xlink:href="${real[1]}" style="mix-blend-mode:screen"/></g>`
+        + (opts && opts.logo && window.LOGO_DATA ? (kind === 'polo' ? `<image x="250" y="150" width="80" height="80" xlink:href="${window.LOGO_DATA}" preserveAspectRatio="xMidYMid meet"/>` : `<image x="160" y="${kind === 'oversize' ? 120 : 125}" width="140" height="110" xlink:href="${window.LOGO_DATA}" preserveAspectRatio="xMidYMid meet"/>`) : '')
+        + `</svg>`;
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
     const d = shade(color, .7), st = 'stroke="rgba(0,0,0,.28)" stroke-width="1.5"';
