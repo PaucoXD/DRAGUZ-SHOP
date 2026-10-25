@@ -138,9 +138,9 @@
     const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const qs = norm(S.q).trim();
     const list = items.filter(x => (S.cat === 'Todo' || (S.cat === 'Nuevos' ? x.nuevo : x.category === S.cat)) && (!qs || norm(x.name + ' ' + x.category).includes(qs)));
-    // Populares: hasta 10 piezas disponibles al azar (se eligen una vez por visita), en una fila que se desliza
+    // Populares: siempre 8 piezas disponibles al azar (se eligen una vez por visita), en una fila que se desliza
     const avail = items.filter(x => x.onDemand || (+x.qty || 0) > 0);
-    if (!S.pop || S.pop.length < Math.min(10, avail.length) || S.pop.some(id => !avail.find(x => x.id === id))) S.pop = avail.map(x => x.id).sort(() => Math.random() - .5).slice(0, 10);
+    if (!S.pop || S.pop.length < Math.min(8, avail.length) || S.pop.some(id => !avail.find(x => x.id === id))) S.pop = avail.map(x => x.id).sort(() => Math.random() - .5).slice(0, 8);
     const pop = S.pop.map(id => avail.find(x => x.id === id));
     const row = pop.map(stockCard).join('');
     $('#pop-track').innerHTML = row + row.replace(/<article /g, '<article aria-hidden="true" ').replace(/tabindex="0"/g, 'tabindex="-1"');
