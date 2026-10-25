@@ -65,13 +65,13 @@
       { id: 'seed-gorra', order: 5, kind: 'cap', name: 'Gorra snapback', category: 'Gorras', description: 'Gorra snapback ajustable, frente estructurado.', priceMenudeo: 129, priceMayoreo: 99, mayoreoMin: 12, sizes: [], sizeExtra: {}, colors: [C.negro, C.marino, C.blanco], images: [], active: true },
       { id: 'seed-taza', order: 6, kind: 'mug', name: 'Taza personalizada', category: 'Accesorios', description: 'Taza cerámica 11 oz con tu diseño.', priceMenudeo: 99, priceMayoreo: 79, mayoreoMin: 12, sizes: [], sizeExtra: {}, colors: [C.blanco, C.negro], images: [], active: true },
       { id: 'seed-tote', order: 7, kind: 'bag', name: 'Bolsa tote', category: 'Accesorios', description: 'Bolsa de tela resistente para uso diario.', priceMenudeo: 89, priceMayoreo: 69, mayoreoMin: 12, sizes: [], sizeExtra: {}, colors: [C.negro, C.blanco], images: [], active: true },
-      { id: 'seed-sticker', order: 8, kind: 'sticker', name: 'Sticker troquelado', category: 'Stickers', description: 'Sticker de vinil troquelado a la forma de tu diseño, resistente al agua.', priceMenudeo: 25, priceMayoreo: 15, mayoreoMin: 25, sizes: [], sizeExtra: {}, colors: [], images: [], active: true }
+      { id: 'seed-sticker', order: 8, kind: 'sticker', name: 'Sticker troquelado', category: 'Stickers', description: 'Sticker DTF UV a todo color, se pega sin calor en tazas, termos y superficies lisas.', priceMenudeo: 25, priceMayoreo: 15, mayoreoMin: 25, sizes: [], sizeExtra: {}, colors: [], images: [], active: true }
     ],
     extras: [
       { id: 'seed-ex-frente', name: 'Estampado DTF frente (tamaño carta)', price: 45, scope: 'pieza', hint: 'Por pieza', active: true },
       { id: 'seed-ex-espalda', name: 'Estampado DTF espalda', price: 55, scope: 'pieza', hint: 'Por pieza', active: true },
       { id: 'seed-ex-logo', name: 'Logo chico (pecho / manga)', price: 25, scope: 'pieza', hint: 'Por pieza', active: true },
-      { id: 'seed-ex-empaque', name: 'Empaque premium (caja negra mate)', price: 30, scope: 'pieza', hint: 'Por pieza', active: true },
+      { id: 'seed-ex-empaque', name: 'Empaque premium (caja negra mate)', price: 30, scope: 'pieza', hint: 'Por pieza', active: false },
       { id: 'seed-ex-diseno', name: 'Diseño / vectorizado de logo', price: 150, scope: 'unico', hint: 'Cargo único', active: true }
     ],
     // Opiniones: conversaciones reales resumidas, solo con iniciales (sin fotos, teléfonos ni datos de pago).
@@ -90,14 +90,14 @@
     ],
     // Preguntas frecuentes. {anticipo} se reemplaza por el % de Ajustes.
     faqs: [
-      { id: 'seed-faq-1', order: 1, active: true, q: '¿Cuánto tarda mi pedido?', a: 'Depende de la cantidad y del diseño. Te confirmamos la fecha al cotizar; si lo necesitas para un día en especial, dínoslo desde el principio y lo planeamos.' },
-      { id: 'seed-faq-2', order: 2, active: true, q: '¿Hay pedido mínimo?', a: 'No: puedes pedir desde una pieza con precio de menudeo. A partir de cierta cantidad aplica precio de mayoreo; el cotizador te lo calcula al instante.' },
+      { id: 'seed-faq-1', order: 1, active: true, q: '¿Cuánto tarda mi pedido?', a: 'La producción tarda de 2 a 3 días después de tu anticipo. Te confirmamos la fecha al cotizar; si lo necesitas para un día en especial, dínoslo desde el principio y lo planeamos.' },
+      { id: 'seed-faq-2', order: 2, active: true, q: '¿Hay pedido mínimo?', a: 'No: puedes pedir desde una pieza con precio de menudeo. Desde 8 playeras aplica precio de mayoreo; el cotizador te lo calcula al instante.' },
       { id: 'seed-faq-3', order: 3, active: true, q: '¿Cómo pago?', a: 'Por transferencia o en efectivo. Para arrancar tu pedido pedimos un anticipo del {anticipo} % y el resto al entregar.' },
-      { id: 'seed-faq-4', order: 4, active: true, q: '¿Hacen entregas?', a: 'Sí. Nos vemos en un punto de entrega o te lo llevamos a domicilio. Pregúntanos por envíos a otras ciudades.' },
+      { id: 'seed-faq-4', order: 4, active: true, q: '¿Hacen entregas?', a: 'Sí. Nos vemos en un punto medio o te lo llevamos a domicilio. Pregúntanos por envíos a otras ciudades.' },
       { id: 'seed-faq-5', order: 5, active: true, q: '¿Cómo les mando mi diseño?', a: 'Mándalo por WhatsApp junto con tu folio de cotización. Lo ideal es PNG con fondo transparente, PDF o SVG. Si solo tienes una foto o un boceto, lo podemos vectorizar.' },
       { id: 'seed-faq-6', order: 6, active: true, q: '¿Venden playeras sin diseño?', a: 'Sí, también vendemos prendas lisas. Pregúntanos por colores y tallas disponibles.' },
       { id: 'seed-faq-7', order: 7, active: true, q: '¿Cómo cuido mi prenda estampada?', a: 'Lávala al revés con agua fría, sin cloro ni suavizante fuerte, y no planches directo sobre el estampado.' },
-      { id: 'seed-faq-8', order: 8, active: true, q: '¿Qué es la tarjeta Draguz?', a: 'Es tu tarjeta de cliente: escanea su QR, regístrala y acumula tus compras. Con tu primera compra entras al sorteo del mes y cada cierto número de compras te toca un descuento.' }
+      { id: 'seed-faq-8', order: 8, active: true, q: '¿Qué es la tarjeta Draguz Shop?', a: 'Es tu tarjeta de cliente: escanea su QR, regístrala y acumula tus compras. Con tu primera compra entras al sorteo del mes y cada cierto número de compras te toca un descuento.' }
     ],
     gallery: [],
     stock: [

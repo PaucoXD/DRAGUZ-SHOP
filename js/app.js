@@ -66,9 +66,9 @@
 
   /* ───── HERO ───── */
   const SLIDES = [
-    { img: 'assets/img/cap.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras, hoodies y gorras personalizadas con DTF, UV y vinil.', tags: ['DTF', 'UV', 'Vinil'], a: ['Cotizar ahora', '#/cotizador'], b: ['Ver stock', '#/stock'] },
-    { img: 'assets/img/box_dark.jpg', k: 'Unboxing premium', t: 'Cada pedido, en caja negra', p: 'Empaque mate, hang tag y detalles con tu identidad.', a: ['Ver stock', '#/stock'] },
-    { img: 'assets/img/tag_h.jpg', k: 'Mayoreo', t: 'Más piezas, <em>mejor precio</em>', p: 'Arma tu cotización y mira el precio de menudeo o mayoreo al instante.', a: ['Cotizar mayoreo', '#/cotizador'] }
+    { img: 'assets/img/cap.jpg', k: 'Streetwear a tu medida', t: 'Define your <em>different</em>', p: 'Playeras, hoodies y gorras personalizadas con DTF textil y DTF UV.', tags: ['DTF textil', 'DTF UV', '100% algodón'], a: ['Cotizar ahora', '#/cotizador'], b: ['Ver stock', '#/stock'] },
+    { img: 'assets/img/tag_v1.jpg', k: 'Regular u oversize', t: 'Tu corte, <em>tu estilo</em>', p: 'Playeras 100% algodón en corte regular u oversize. Producción en 2 a 3 días.', a: ['Ver stock', '#/stock'] },
+    { img: 'assets/img/tag_h.jpg', k: 'Mayoreo', t: 'Más piezas, <em>mejor precio</em>', p: 'Precio de mayoreo desde 8 playeras. Arma tu cotización y míralo al instante.', a: ['Cotizar mayoreo', '#/cotizador'] }
   ];
   let hi = 0, ht;
   function renderHero() {
@@ -164,10 +164,10 @@
     const tiles = [
       { img: 'assets/img/tag_v1.jpg', k: 'Playeras y polos', t: 'Tu marca en cada prenda', cat: 'Playeras' },
       { img: 'assets/img/cap.jpg', k: 'Gorras y accesorios', t: 'Detalles que se notan', cat: 'Gorras' },
-      { img: 'assets/img/box_dark.jpg', k: 'Acabado premium', t: 'Tu diseño, en tu prenda', cat: 'Hoodies' }
+      { img: 'assets/img/neck.jpg', k: 'Hoodies', t: 'Tu diseño, en tu prenda', cat: 'Hoodies' }
     ];
     $('#promos').innerHTML = tiles.map(t => `<a class="promo" href="#/cotizador" data-pid="${first(t.cat)}" style="background-image:url(${t.img})"><div><span class="kicker">${t.k}</span><h3>${t.t}</h3><span class="btn sm ghost">Cotizar</span></div></a>`).join('')
-      + `<a class="promo solid" href="#/cotizador"><div><span class="kicker" style="color:#fff">Precio por volumen</span><div class="big">Mayoreo</div><p style="margin:10px 0 16px;color:#cfcfe0">Más piezas, mejor precio unitario.</p><span class="btn sm">Ver precios</span></div></a>`;
+      + `<a class="promo solid" href="#/cotizador"><div><span class="kicker" style="color:#fff">Precio por volumen</span><div class="big">Mayoreo</div><p style="margin:10px 0 16px;color:#cfcfe0">Desde 8 playeras, mejor precio unitario.</p><span class="btn sm">Ver precios</span></div></a>`;
   }
 
   /* ───── TRABAJOS, OPINIONES Y PREGUNTAS ───── */
@@ -433,7 +433,7 @@
     const v = $('#view-card'), code = L.normCode(raw);
     const head = '<span class="kicker"><i class="slash"></i>Tarjeta de cliente</span>';
     if (!code) {
-      v.innerHTML = `${head}<h1>Mi tarjeta</h1><p class="sub muted">Escribe el código que viene en tu tarjeta Draguz, o escanea su QR con la cámara.</p>
+      v.innerHTML = `${head}<h1>Mi tarjeta</h1><p class="sub muted">Escribe el código que viene en tu tarjeta Draguz Shop, o escanea su QR con la cámara.</p>
         <form id="card-find" class="card-find"><input name="code" placeholder="DZ-0000-XXX" required maxlength="16" autocomplete="off" value="${esc(raw || '')}"><button class="btn">Ver mi tarjeta</button></form>
         ${raw ? '<p class="err">Ese código no es válido. Revisa que esté completo, por ejemplo DZ-0147-K7Q.</p>' : ''}`;
       $('#card-find').onsubmit = e => { e.preventDefault(); const t = String(new FormData(e.target).get('code') || '').trim(); location.hash = '#/tarjeta/' + (L.normCode(t) || encodeURIComponent(t)); };
@@ -511,7 +511,7 @@
     else if (h === 'admin') {
       if (!S.isAdmin && S.adminPending) { show('home'); return; }
       if (!S.isAdmin) { show('home'); if (S.user) toast('Tu cuenta no tiene permisos de administrador.', true); else openAuth('login'); return; }
-      show('admin'); window.Admin.render(); window.scrollTo(0, 0);
+      show('admin'); loadAdmin().then(() => { window.Admin.render(); window.scrollTo(0, 0); }).catch(() => toast('No se pudo cargar el panel. Revisa tu conexión.', true));
     } else {
       show('home');
       if (SECTIONS.includes(h)) { const el = document.getElementById(h); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 30); }
@@ -608,6 +608,10 @@
     $('#btn-account').onclick = () => { if (S.user) location.hash = '#/cuenta'; else openAuth('login'); };
     window.addEventListener('hashchange', route);
   }
+
+  // El panel solo se descarga cuando un admin entra, así los clientes cargan menos
+  let adminP;
+  function loadAdmin() { return window.Admin ? Promise.resolve() : adminP || (adminP = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'js/admin.js?v=20261025d'; s.onload = res; s.onerror = () => { adminP = null; rej(); }; document.head.appendChild(s); })); }
 
   async function boot() {
     $('#yr').textContent = new Date().getFullYear();

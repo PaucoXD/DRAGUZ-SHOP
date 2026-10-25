@@ -246,7 +246,7 @@ window.Admin = (function () {
     const one = c => `<div class="bc"><div class="qr">${qr(L.cardUrl(c.id))}</div><div class="tx"><div class="k">Tarjeta de cliente</div><div class="code">${esc(c.id)}</div><div class="p">Escanea el QR y acumula tus compras</div>
       ${cf.pct ? `<div class="b"><b>${cf.every}ª compra:</b> ${cf.pct}% de descuento</div>` : ''}<div class="b"><b>1ª compra:</b> entras al sorteo del mes</div><div class="u">${esc(host)}</div></div></div>`;
     w.document.open();
-    w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Tarjetas Draguz (${list.length})</title><style>
+    w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Tarjetas Draguz Shop (${list.length})</title><style>
       @page{size:letter;margin:10mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Montserrat,Arial,sans-serif;color:#0a0a0c}
       .bar{padding:14px;font-size:14px;background:#f4f1e9;display:flex;gap:12px;align-items:center}.bar button{padding:8px 14px;font-weight:700;cursor:pointer}
       .grid{display:grid;grid-template-columns:repeat(2,90mm);gap:0;justify-content:center;padding:6mm 0}
