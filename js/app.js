@@ -89,6 +89,7 @@
       }).catch(() => { });
     });
   }
+  const codeOf = p => p.code || (window.CAT_CODIGOS || {})[p.id] || '';
   const imgOf = p => p.foto || (p.images && p.images[0]) || window.ph(p.kind || 'tee', (p.colors && p.colors[0] && p.colors[0].hex) || '#1a1a1f');
   const activeStock = () => S.stock.filter(x => x.active !== false);
   const activeCat = () => S.catalog.filter(x => x.active !== false);
@@ -137,7 +138,7 @@
     $('#stock-tabs').innerHTML = cats.map(c => `<button class="${c === S.cat ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}<b>${n(c)}</b></button>`).join('');
     const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const qs = norm(S.q).trim();
-    const list = items.filter(x => (S.cat === 'Todo' || (S.cat === 'Nuevos' ? x.nuevo : x.category === S.cat)) && (!qs || norm(x.name + ' ' + x.category).includes(qs)));
+    const list = items.filter(x => (S.cat === 'Todo' || (S.cat === 'Nuevos' ? x.nuevo : x.category === S.cat)) && (!qs || norm(x.name + ' ' + x.category + ' ' + codeOf(x)).includes(qs)));
     // Populares: siempre 8 piezas disponibles al azar (se eligen una vez por visita), en una fila que se desliza
     const avail = items.filter(x => x.onDemand || (+x.qty || 0) > 0);
     if (!S.pop || S.pop.length < Math.min(8, avail.length) || S.pop.some(id => !avail.find(x => x.id === id))) S.pop = avail.map(x => x.id).sort(() => Math.random() - .5).slice(0, 8);
@@ -157,7 +158,7 @@
     const q = +p.qty || 0, out = !p.onDemand && q <= 0;
       const badge = out ? '<span class="badge">Agotado</span>' : !p.onDemand && q <= 3 ? '<span class="badge red">Últimas piezas</span>' : p.nuevo ? '<span class="badge red">Nuevo</span>' : '';
       const cuts = (p.cuts || []).length ? `<span class="cuts">${p.cuts.map(esc).join(' · ')}</span>` : '';
-      return `<article class="card" data-id="${p.id}" tabindex="0"><div class="card-img"><img loading="lazy" decoding="async" data-sid="${p.id}" src="${imgOf(p)}" alt="Playera ${esc(p.name)}">${badge}</div><div class="card-body"><span class="cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price-row"><span class="price">${money(p.price)}</span>${cuts}</div>${out ? '' : '<span class="btn sm card-cta">Lo quiero</span>'}</div></article>`;
+      return `<article class="card" data-id="${p.id}" tabindex="0"><div class="card-img"><img loading="lazy" decoding="async" data-sid="${p.id}" src="${imgOf(p)}" alt="Playera ${esc(p.name)}">${badge}</div><div class="card-body"><span class="cat">${esc(p.category)}${codeOf(p) ? ' · ' + esc(codeOf(p)) : ''}</span><h3>${esc(p.name)}</h3><div class="price-row"><span class="price">${money(p.price)}</span>${cuts}</div>${out ? '' : '<span class="btn sm card-cta">Lo quiero</span>'}</div></article>`;
   }
   function openStock(id) {
     const p = S.stock.find(x => x.id === id); if (!p) return;
@@ -167,7 +168,7 @@
     const pick = { cut: cuts[cuts.length - 1] || '', size: '' };
     const opts = (k, arr) => arr.map(v => `<button type="button" data-${k}="${esc(v)}">${esc(v)}</button>`).join('');
     const m = openModal(`<div class="pgal"><div><div class="main"><img id="pg-main" src="${imgs[0]}" alt="${esc(p.name)}"></div>${imgs.length > 1 ? '<div class="thumbs">' + imgs.map((s, i) => `<button class="${i ? '' : 'on'}" data-i="${i}"><img src="${s}" alt=""></button>`).join('') + '</div>' : ''}</div>
-      <div class="pinfo"><span class="tag">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
+      <div class="pinfo"><span class="tag">${esc(p.category)}${codeOf(p) ? ' · Código ' + esc(codeOf(p)) : ''}</span><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div>
       ${p.description ? `<p>${esc(p.description)}</p>` : ''}
       ${cuts.length ? `<span class="lbl">Corte</span><div class="chips pick" id="pk-cut">${opts('cut', cuts)}</div>${fitHTML(cuts)}` : ''}
       ${sizes.length ? `<span class="lbl">Talla</span><div class="chips pick" id="pk-size">${opts('size', sizes)}</div>` : ''}
@@ -183,7 +184,8 @@
     $('#st-wa', m).onclick = () => {
       if (sizes.length && !pick.size) { toast('Elige tu talla', true); return; }
       const det = [pick.cut && 'corte ' + pick.cut.toLowerCase(), pick.size && 'talla ' + pick.size].filter(Boolean).join(', ');
-      openWA(p.onDemand ? `Hola Draguz Shop, quiero pedir: ${p.name}${det ? ' (' + det + ')' : ''}, ${money(p.price)}.` : `Hola Draguz Shop, quiero apartar: ${p.name}${det ? ' (' + det + ')' : ''}, ${money(p.price)}. ¿Sigue disponible?`);
+      const nm = p.name + (codeOf(p) ? ' [' + codeOf(p) + ']' : '');
+      openWA(p.onDemand ? `Hola Draguz Shop, quiero pedir: ${nm}${det ? ' (' + det + ')' : ''}, ${money(p.price)}.` : `Hola Draguz Shop, quiero apartar: ${nm}${det ? ' (' + det + ')' : ''}, ${money(p.price)}. ¿Sigue disponible?`);
     };
     $('#st-custom', m).onclick = closeModal;
   }
