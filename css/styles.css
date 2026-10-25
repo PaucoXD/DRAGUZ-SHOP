@@ -614,3 +614,14 @@ html{-webkit-tap-highlight-color:transparent}
 .chips.pick button{border:1px solid #3a3a46;border-radius:30px;padding:7px 16px;font:700 13px var(--mono);color:#fff}
 .chips.pick button:hover{border-color:#6c6c7b}
 .chips.pick button.on{border-color:var(--red);background:rgba(227,0,15,.16)}
+
+/* Populares: una fila que se desliza sola hacia la derecha */
+.pop-row{overflow:hidden;padding:4px 0 8px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.pop-track{display:flex;width:max-content;animation:popmove var(--dur,40s) linear infinite}
+.pop-row:hover .pop-track,.pop-row:focus-within .pop-track{animation-play-state:paused}
+.pop-track .card{flex:0 0 250px;margin-right:20px}
+@keyframes popmove{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+.pop-more{display:flex;justify-content:center;margin:30px 0 10px}
+#stock-all{margin-top:30px}
+@media (max-width:640px){.pop-track .card{flex-basis:170px;margin-right:14px}}
+@media (prefers-reduced-motion:reduce){.pop-track{animation:none}.pop-row{overflow-x:auto}}

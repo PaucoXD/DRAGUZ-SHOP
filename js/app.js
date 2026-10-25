@@ -106,12 +106,23 @@
     const n = c => c === 'Todo' ? items.length : c === 'Nuevos' ? nuevos : count[c];
     $('#stock-tabs').innerHTML = cats.map(c => `<button class="${c === S.cat ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}<b>${n(c)}</b></button>`).join('');
     const list = items.filter(x => S.cat === 'Todo' || (S.cat === 'Nuevos' ? x.nuevo : x.category === S.cat));
-    $('#stock-grid').innerHTML = list.length ? list.map(p => {
-      const q = +p.qty || 0, out = !p.onDemand && q <= 0;
+    // Populares: hasta 10 piezas disponibles al azar (se eligen una vez por visita), en una fila que se desliza
+    const avail = items.filter(x => x.onDemand || (+x.qty || 0) > 0);
+    if (!S.pop || S.pop.length < Math.min(10, avail.length) || S.pop.some(id => !avail.find(x => x.id === id))) S.pop = avail.map(x => x.id).sort(() => Math.random() - .5).slice(0, 10);
+    const pop = S.pop.map(id => avail.find(x => x.id === id));
+    const row = pop.map(stockCard).join('');
+    $('#pop-track').innerHTML = row + row.replace(/<article /g, '<article aria-hidden="true" ').replace(/tabindex="0"/g, 'tabindex="-1"');
+    $('#pop-track').style.setProperty('--dur', Math.max(20, pop.length * 5) + 's');
+    $('#pop-row').hidden = !pop.length;
+    $('#stock-all-btn').parentElement.hidden = !items.length;
+    $('#stock-all-btn').textContent = $('#stock-all').hidden ? `Ver todo el catálogo (${items.length})` : 'Ocultar catálogo';
+    $('#stock-grid').innerHTML = list.length ? list.map(stockCard).join('') : '<div class="empty">Pronto subiremos piezas nuevas. Mientras tanto, cotiza lo tuyo abajo.</div>';
+  }
+  function stockCard(p) {
+    const q = +p.qty || 0, out = !p.onDemand && q <= 0;
       const badge = out ? '<span class="badge">Agotado</span>' : !p.onDemand && q <= 3 ? '<span class="badge red">Últimas piezas</span>' : p.nuevo ? '<span class="badge red">Nuevo</span>' : '';
       const cuts = (p.cuts || []).length ? `<span class="cuts">${p.cuts.map(esc).join(' · ')}</span>` : '';
       return `<article class="card" data-id="${p.id}" tabindex="0"><div class="card-img"><img loading="lazy" src="${imgOf(p)}" alt="${esc(p.name)}">${badge}</div><div class="card-body"><span class="cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="price-row"><span class="price">${money(p.price)}</span>${cuts}</div></div></article>`;
-    }).join('') : '<div class="empty">Pronto subiremos piezas nuevas. Mientras tanto, cotiza lo tuyo abajo.</div>';
   }
   function openStock(id) {
     const p = S.stock.find(x => x.id === id); if (!p) return;
@@ -564,6 +575,8 @@
     });
     $('#stock-tabs').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) { S.cat = b.dataset.cat; S.catSet = true; renderStock(); } });
     $('#stock-grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); });
+    $('#pop-track').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); });
+    $('#stock-all-btn').addEventListener('click', () => { $('#stock-all').hidden = !$('#stock-all').hidden; renderStock(); });
     $('#gallery-grid').addEventListener('click', e => { const g = e.target.closest('[data-gal]'); if (g) openGallery(g.dataset.gal); });
     $('#faq-wa').onclick = () => openWA('Hola Draguz Shop, tengo una duda: ');
     $('#stock-grid').addEventListener('keydown', e => { if (e.key === 'Enter') { const c = e.target.closest('.card'); if (c) openStock(c.dataset.id); } });
